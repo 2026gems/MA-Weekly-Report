@@ -11,7 +11,7 @@ export const NewEngineSection: React.FC<Props> = ({ report }) => {
   const { newEngine } = report;
 
   return (
-    <section id="section-new-engine" className="bg-white rounded-xl border border-stone-200/80 p-5 md:p-6 shadow-sm">
+    <section id="section-new-engine" className="bg-white rounded-xl border border-stone-200/80 p-5 md:p-6 shadow-sm scroll-mt-48">
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-stone-100 gap-2">
         <div>
           <div className="flex items-center gap-2">

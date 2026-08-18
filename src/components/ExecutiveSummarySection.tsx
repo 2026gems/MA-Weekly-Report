@@ -11,7 +11,7 @@ export const ExecutiveSummarySection: React.FC<Props> = ({ report }) => {
   const { executiveSummary, newEngine, evergreenEngine } = report;
 
   return (
-    <section id="section-executive-summary" className="bg-white rounded-xl border border-stone-200/80 p-5 md:p-6 shadow-sm">
+    <section id="section-executive-summary" className="bg-white rounded-xl border border-stone-200/80 p-5 md:p-6 shadow-sm scroll-mt-48">
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-stone-100 gap-2">
         <div>
           <div className="flex items-center gap-2">
@@ -119,7 +119,7 @@ export const ExecutiveSummarySection: React.FC<Props> = ({ report }) => {
             )}
           </div>
           <p className="text-[11px] text-stone-500 mt-1">
-            True non-viral creative baseline (Ahmed's core health benchmark)
+            True non-viral creative baseline (Core health benchmark)
           </p>
         </div>
 

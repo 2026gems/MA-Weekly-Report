@@ -1,18 +1,17 @@
 import React from 'react';
 import { WeeklyReport } from '../types';
-import { Lightbulb, CheckSquare, TrendingUp, Compass, Shield, Target, ArrowUpRight, Award } from 'lucide-react';
-import { formatPercent } from '../utils/formatters';
+import { Lightbulb, CheckSquare, TrendingUp, Compass, Shield } from 'lucide-react';
 
 interface Props {
   report: WeeklyReport;
   previousReport?: WeeklyReport;
 }
 
-export const StrategicInsightsSection: React.FC<Props> = ({ report, previousReport }) => {
+export const StrategicInsightsSection: React.FC<Props> = ({ report }) => {
   const { strategicInsights } = report;
 
   return (
-    <section id="section-strategic-insights" className="bg-white rounded-xl border border-stone-200/80 p-5 md:p-6 shadow-sm">
+    <section id="section-strategic-insights" className="bg-white rounded-xl border border-stone-200/80 p-5 md:p-6 shadow-sm scroll-mt-48">
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-stone-100 gap-2">
         <div>
           <div className="flex items-center gap-2">
@@ -95,7 +94,7 @@ export const StrategicInsightsSection: React.FC<Props> = ({ report, previousRepo
                 <span>Rising Baseline Improvement Tracker</span>
               </h3>
               <span className="text-[10px] bg-stone-200 text-stone-900 font-bold px-2 py-0.5 rounded">
-                Ahmed's Target
+                Growth Benchmark
               </span>
             </div>
 
@@ -189,8 +188,8 @@ export const StrategicInsightsSection: React.FC<Props> = ({ report, previousRepo
           <Shield className="w-3.5 h-3.5 text-stone-400" />
           <span>{strategicInsights.closingSignOff}</span>
         </div>
-        <div className="text-[11px] text-stone-500">
-          Prepared for Ahmed (Memorialize) by MOAE Digitals
+        <div className="text-[11px] text-stone-500 font-medium">
+          Prepared by MOAE Digitals
         </div>
       </div>
     </section>

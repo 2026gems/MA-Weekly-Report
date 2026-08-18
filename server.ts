@@ -58,7 +58,7 @@ async function startServer() {
 
       const targetWeek = customWeekNumber || 5;
 
-      const systemPrompt = `You are an expert social media analytics reporting assistant for Memorialize Art, prepared by MOAE Digitals for Ahmed (Memorialize).
+      const systemPrompt = `You are an expert social media analytics reporting assistant for Memorialize Art, prepared by MOAE Digitals.
 Analyze the provided report document (PDF, CSV, or raw text) for Week ${targetWeek} and extract all weekly performance metrics into a clean, complete, structured JSON object matching the exact schema.
 
 MASTER RULES TO STRICTLY FOLLOW:

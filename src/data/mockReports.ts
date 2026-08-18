@@ -5,7 +5,7 @@ export const INITIAL_REPORTS: WeeklyReport[] = [
     id: 'week-4',
     weekNumber: 4,
     dateRange: 'August 10 – 16, 2026',
-    clientName: 'Ahmed (Memorialize)',
+    clientName: 'Memorialize',
     preparedBy: 'MOAE Digitals',
     
     executiveSummary: {
@@ -385,7 +385,7 @@ export const INITIAL_REPORTS: WeeklyReport[] = [
     id: 'week-3',
     weekNumber: 3,
     dateRange: 'August 3 – 9, 2026',
-    clientName: 'Ahmed (Memorialize)',
+    clientName: 'Memorialize',
     preparedBy: 'MOAE Digitals',
     
     executiveSummary: {

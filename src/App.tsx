@@ -191,66 +191,17 @@ export default function App() {
         {/* TAB 1: Weekly Dashboard View */}
         {activeTab === 'dashboard' && currentReport && (
           <div className="space-y-6 animate-fadeIn">
-            {/* Quick Section Anchor Pills for smooth scanning */}
-            <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 text-xs text-stone-600 scrollbar-none">
-              <nav 
-                aria-label="Section Navigation"
-                className="flex items-center gap-1.5"
-              >
-                <span className="font-semibold text-stone-500 uppercase text-[10px] mr-1">Sections:</span>
-                <a 
-                  href="#section-executive-summary" 
-                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-                >
-                  1. Executive Summary
-                </a>
-                <a 
-                  href="#section-evergreen-engine" 
-                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-                >
-                  2. Evergreen Engine
-                </a>
-                <a 
-                  href="#section-new-engine" 
-                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-                >
-                  3. New Engine
-                </a>
-                <a 
-                  href="#section-top-content" 
-                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-                >
-                  4. Top Content
-                </a>
-                <a 
-                  href="#section-retention-trackers" 
-                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-                >
-                  5. Retention Trackers
-                </a>
-                <a 
-                  href="#section-emotional-themes" 
-                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-                >
-                  6. Emotional Themes
-                </a>
-                <a 
-                  href="#section-operational-integrity" 
-                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-                >
-                  7. Integrity Log
-                </a>
-                <a 
-                  href="#section-strategic-insights" 
-                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-                >
-                  8. Strategic Insights
-                </a>
-              </nav>
+            {/* Report Top Meta & Sync Bar */}
+            <div className="flex items-center justify-between gap-2 text-xs text-stone-600">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-stone-900">Week {currentReport.weekNumber} Overview</span>
+                <span className="text-stone-400">•</span>
+                <span className="text-stone-600">{currentReport.dateRange}</span>
+              </div>
 
               {isCloudSynced && (
-                <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-stone-500 font-medium shrink-0 bg-white border border-stone-200 px-2.5 py-1 rounded-md">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <div className="flex items-center gap-1.5 text-[11px] text-stone-600 font-medium shrink-0 bg-white border border-stone-200 px-2.5 py-1 rounded-md shadow-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span>Cloud Synced</span>
                 </div>
               )}
@@ -314,7 +265,7 @@ export default function App() {
             {/* Cross-Week Theme Insights Card */}
             <div className="bg-white rounded-xl border border-stone-200 p-5 shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 mb-3">
-                Key Thematic Takeaways for Ahmed:
+                Key Thematic Takeaways:
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-stone-700">
                 <div className="p-3.5 rounded-lg bg-stone-50 border border-stone-200">
@@ -363,7 +314,7 @@ export default function App() {
                   Executive Briefing Document (Week {currentReport.weekNumber})
                 </h2>
                 <p className="text-xs text-stone-500">
-                  Clean, print-ready document formatted strictly for executive presentation to Ahmed.
+                  Clean, print-ready document formatted strictly for executive presentation.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -395,7 +346,6 @@ export default function App() {
                 </div>
 
                 <div className="text-right text-xs text-stone-600">
-                  <div>Prepared for: <strong className="text-stone-900">Ahmed</strong></div>
                   <div>Prepared by: <strong className="text-stone-900">MOAE Digitals</strong></div>
                   <div>Status: <span className="text-emerald-700 font-semibold">{currentReport.operationalIntegrity.operationalStatus}</span></div>
                 </div>

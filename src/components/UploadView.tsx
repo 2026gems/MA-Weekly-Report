@@ -90,7 +90,7 @@ export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onC
           id: `week-${weekNum}`,
           weekNumber: weekNum,
           dateRange: 'August 17 – 23, 2026',
-          clientName: 'Ahmed (Memorialize)',
+          clientName: 'Memorialize',
           preparedBy: 'MOAE Digitals',
           executiveSummary: {
             summaryText: `Week ${weekNum} performance report for Memorialize extracted from uploaded analytics.`,
@@ -310,7 +310,7 @@ export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onC
                 <button
                   onClick={() => {
                     setInputText(`WEEK 5 SOCIAL MEDIA PERFORMANCE REPORT
-August 17 – 23, 2026 | Prepared for Ahmed (Memorialize) by MOAE Digitals
+August 17 – 23, 2026 | Prepared by MOAE Digitals
 
 1. Executive Summary & High-Level Campaign Snapshot
 Week 5 was another solid week with 63 posts published across Facebook, Instagram, and TikTok (21 per platform).
@@ -396,7 +396,7 @@ End of Week 5 Consolidated Report. Prepared by MOAE Digitals.`);
                         Week {extractedReport.weekNumber} Report ({extractedReport.dateRange})
                       </div>
                       <div className="text-[11px] text-stone-500 mt-0.5">
-                        Client: {extractedReport.clientName} • Prepared by {extractedReport.preparedBy}
+                        Prepared by {extractedReport.preparedBy}
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 mt-3 pt-2 border-t border-stone-100 text-center">

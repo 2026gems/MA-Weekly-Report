@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActiveTab, WeeklyReport } from '../types';
 import { 
   BarChart3, 
@@ -7,7 +7,6 @@ import {
   UploadCloud, 
   Printer, 
   Calendar, 
-  ShieldCheck,
   Trash2,
   Plus
 } from 'lucide-react';
@@ -23,6 +22,17 @@ interface HeaderProps {
   onDeleteReport: (reportId: string) => void;
 }
 
+const DASHBOARD_SECTIONS = [
+  { id: 'section-executive-summary', label: '1. Executive Summary' },
+  { id: 'section-evergreen-engine', label: '2. Evergreen Engine' },
+  { id: 'section-new-engine', label: '3. New Engine' },
+  { id: 'section-top-content', label: '4. Top Content' },
+  { id: 'section-retention-trackers', label: '5. Retention Trackers' },
+  { id: 'section-emotional-themes', label: '6. Emotional Themes' },
+  { id: 'section-operational-integrity', label: '7. Integrity Log' },
+  { id: 'section-strategic-insights', label: '8. Strategic Insights' },
+];
+
 export const Header: React.FC<HeaderProps> = ({
   reports,
   selectedReportId,
@@ -34,31 +44,62 @@ export const Header: React.FC<HeaderProps> = ({
   onDeleteReport,
 }) => {
   const currentReport = reports.find((r) => r.id === selectedReportId) || reports[0];
-
-  // Ensure reports are ordered with the MOST RECENT at the beginning
   const sortedReports = [...reports].sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
 
+  const [activeSectionId, setActiveSectionId] = useState<string>('section-executive-summary');
+
+  // Track active section on scroll
+  useEffect(() => {
+    if (activeTab !== 'dashboard') return;
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 220;
+      for (const section of DASHBOARD_SECTIONS) {
+        const el = document.getElementById(section.id);
+        if (el) {
+          const top = el.offsetTop;
+          const height = el.offsetHeight;
+          if (scrollPosition >= top && scrollPosition < top + height) {
+            setActiveSectionId(section.id);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [activeTab]);
+
+  const scrollToSection = (sectionId: string) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+      setActiveSectionId(sectionId);
+    }
+  };
+
   return (
-    <header id="main-header" className="bg-stone-900 text-stone-100 border-b border-stone-800 sticky top-0 z-30 shadow-sm">
+    <header id="main-header" className="bg-stone-900 text-stone-100 border-b border-stone-800 sticky top-0 z-30 shadow-md">
       {/* Top Brand & Controls Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
           {/* Logo & Identity */}
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center text-stone-950 font-bold text-base tracking-tight shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center text-stone-950 font-bold text-sm tracking-tight shadow-sm shrink-0">
               M
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h1 className="text-lg font-bold tracking-tight text-white">
+                <h1 className="text-base font-bold tracking-tight text-white">
                   Memorialize Art
                 </h1>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700 font-medium">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700 font-medium">
                   Social Intelligence Dashboard
                 </span>
               </div>
               <p className="text-[11px] text-stone-400 mt-0.5">
-                Weekly Performance Reports • Prepared for <span className="text-stone-200 font-medium">Ahmed</span> by <span className="text-stone-200 font-medium">MOAE Digitals</span>
+                Weekly Performance Reports • Prepared by <span className="text-stone-200 font-semibold">MOAE Digitals</span>
               </p>
             </div>
           </div>
@@ -100,10 +141,10 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Horizontally Scrollable Week Tabs (Recent week first at the left) */}
-        <div className="mt-3 pt-2.5 border-t border-stone-800/80 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 w-full">
-            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider shrink-0 mr-1">
+        {/* Horizontally Scrollable Week Tabs */}
+        <div className="mt-2.5 pt-2 border-t border-stone-800/80 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 w-full">
+            <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider shrink-0 mr-1">
               Select Week:
             </span>
 
@@ -152,7 +193,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-dashboard"
             onClick={() => onTabChange('dashboard')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
               activeTab === 'dashboard'
                 ? 'bg-stone-800 text-white font-semibold shadow-inner'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
@@ -165,7 +206,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-comparison"
             onClick={() => onTabChange('comparison')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
               activeTab === 'comparison'
                 ? 'bg-stone-800 text-white font-semibold shadow-inner'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
@@ -178,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-themes"
             onClick={() => onTabChange('themes')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
               activeTab === 'themes'
                 ? 'bg-stone-800 text-white font-semibold shadow-inner'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
@@ -191,7 +232,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-upload"
             onClick={() => onTabChange('upload')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
               activeTab === 'upload'
                 ? 'bg-stone-800 text-white font-semibold shadow-inner'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
@@ -204,7 +245,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-export"
             onClick={() => onTabChange('export')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
               activeTab === 'export'
                 ? 'bg-stone-800 text-white font-semibold shadow-inner'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
@@ -215,6 +256,37 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Pinned Section Navigation Bar (Permanently pinned when scrolling the dashboard) */}
+      {activeTab === 'dashboard' && currentReport && (
+        <div id="pinned-sections-navbar" className="bg-stone-900/95 backdrop-blur-md border-t border-stone-800/80 px-4 sm:px-6 lg:px-8 py-1.5 shadow-inner">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 w-full">
+              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider shrink-0 mr-1.5 flex items-center gap-1">
+                <span>Pinned Sections:</span>
+              </span>
+
+              {DASHBOARD_SECTIONS.map((sec) => {
+                const isActive = activeSectionId === sec.id;
+                return (
+                  <button
+                    key={sec.id}
+                    id={`pin-nav-${sec.id}`}
+                    onClick={() => scrollToSection(sec.id)}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all shrink-0 whitespace-nowrap cursor-pointer ${
+                      isActive
+                        ? 'bg-white text-stone-950 font-bold shadow-xs'
+                        : 'bg-stone-800/70 text-stone-300 hover:bg-stone-700 hover:text-white border border-stone-700/50'
+                    }`}
+                  >
+                    {sec.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
