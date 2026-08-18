@@ -1,0 +1,6 @@
+{
+  "name": "Memorialize Art Social Dashboard",
+  "description": "Weekly social media performance and growth comparison dashboard for Memorialize Art, isolating Evergreen vs New content engines and emotional theme metrics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
