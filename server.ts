@@ -40,7 +40,7 @@ async function startServer() {
   // API Route: Extract Weekly Report from PDF, CSV, Text, or Raw Report Dump
   app.post('/api/extract-report', async (req, res) => {
     try {
-      const { text, pdfBase64, customWeekNumber, customWeekTitle, rawFileName } = req.body;
+      const { text, pdfBase64, customWeekNumber } = req.body;
 
       if (!text && !pdfBase64) {
         return res.status(400).json({ error: 'PDF file or text content is required for report extraction.' });
@@ -52,26 +52,27 @@ async function startServer() {
         return res.status(200).json({
           fallback: true,
           message: 'Gemini API key not detected. Using structured template generator.',
-          report: null
+          report: null,
         });
       }
 
+      const targetWeek = customWeekNumber || 5;
+
       const systemPrompt = `You are an expert social media analytics reporting assistant for Memorialize Art, prepared by MOAE Digitals for Ahmed (Memorialize).
-Analyze the provided report document (PDF, CSV, or text) and extract all weekly performance metrics into a clean, complete, structured JSON object matching the exact schema.
+Analyze the provided report document (PDF, CSV, or raw text) for Week ${targetWeek} and extract all weekly performance metrics into a clean, complete, structured JSON object matching the exact schema.
 
 MASTER RULES TO STRICTLY FOLLOW:
-1. NO DEMOGRAPHICS: Do not include Top Countries or Top Cities in the report.
+1. NO DEMOGRAPHICS: Do not include Top Countries or Top Cities anywhere in the report.
 2. Separate the "Evergreen Engine" (overall account-wide views including older circulating videos, profile visits, follower growth, website clicks) from the "New Engine" (performance isolated strictly to videos published during this specific week).
 3. Ensure exact metrics for:
    - Posts published per platform (Target is 21/platform, 63 total)
    - Total new views, average views per post, and median views per post
    - Top-performing new post per platform with title/hook, concept, views, likes, shares, watch time
-   - Watch times & Retention trackers (total watch time in hours, seconds, avg watch time per post)
+   - Watch times & Retention trackers (total watch time in hours, seconds, avg watch time per post, likes, comments, shares, saves)
    - Quantified Emotional Themes Matrix (Grandparent & Multigenerational Stories, Milestone Gifting & Tributes, Parent-Child Loss & Reunification, Sibling & Family Loss, Wedding Honors, Dad Stories)
    - Operational & Posting Integrity Log (Scheduled target vs Published, Missed days, Delayed posts)
    - Strategic Insights & Forward-Looking Action Plan (Key weekly learnings, Consistencies vs Fluctuations, Action plan for next week, Baseline tracker)
-   - Closing signature: "End of Week [X] Consolidated Report. Prepared by MOAE Digitals."
-${customWeekNumber ? `Note: User designated this as Week ${customWeekNumber}.` : ''}`;
+   - Closing signature: "End of Week ${targetWeek} Consolidated Report. Prepared by MOAE Digitals."`;
 
       let contents: any;
 
@@ -228,6 +229,35 @@ ${customWeekNumber ? `Note: User designated this as Week ${customWeekNumber}.` :
                         avgWatchTimeFormatted: { type: Type.STRING },
                         completionRate: { type: Type.STRING },
                         keyTakeaway: { type: Type.STRING },
+                        isCrossPlatformStandout: { type: Type.BOOLEAN },
+                      },
+                    },
+                  },
+                },
+              },
+              engagementAndRetention: {
+                type: Type.OBJECT,
+                properties: {
+                  summary: { type: Type.STRING },
+                  totalWatchTimeHours: { type: Type.NUMBER },
+                  avgWatchTimeSeconds: { type: Type.NUMBER },
+                  totalLikes: { type: Type.NUMBER },
+                  totalComments: { type: Type.NUMBER },
+                  totalShares: { type: Type.NUMBER },
+                  totalSaves: { type: Type.NUMBER },
+                  platforms: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        platform: { type: Type.STRING },
+                        watchTimeHours: { type: Type.NUMBER },
+                        watchTimeSeconds: { type: Type.NUMBER },
+                        avgWatchTimePerPostSeconds: { type: Type.NUMBER },
+                        likes: { type: Type.NUMBER },
+                        comments: { type: Type.NUMBER },
+                        shares: { type: Type.NUMBER },
+                        savesOrOther: { type: Type.STRING },
                       },
                     },
                   },
@@ -251,6 +281,7 @@ ${customWeekNumber ? `Note: User designated this as Week ${customWeekNumber}.` :
                         comments: { type: Type.NUMBER },
                         shares: { type: Type.NUMBER },
                         watchTimeHours: { type: Type.NUMBER },
+                        color: { type: Type.STRING },
                       },
                     },
                   },
@@ -346,9 +377,11 @@ ${customWeekNumber ? `Note: User designated this as Week ${customWeekNumber}.` :
         }));
       }
       if (extractedJson.emotionalThemesMatrix?.themes) {
+        const defaultPalette = ['#1e293b', '#475569', '#64748b', '#94a3b8', '#cbd5e1'];
         extractedJson.emotionalThemesMatrix.themes = extractedJson.emotionalThemesMatrix.themes.map((t: any, idx: number) => ({
           ...t,
           id: t.id || `theme-${idx}`,
+          color: t.color || defaultPalette[idx % defaultPalette.length],
         }));
       }
 
@@ -375,7 +408,7 @@ ${customWeekNumber ? `Note: User designated this as Week ${customWeekNumber}.` :
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Memorialize Art Dashboard Server running on http://0.0.0.0:${PORT}`);
+    console.log(`Memorialize Weekly Report Server running on http://0.0.0.0:${PORT}`);
   });
 }
 

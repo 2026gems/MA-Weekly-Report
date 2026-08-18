@@ -1,0 +1,32 @@
+{
+  "entities": {
+    "WeeklyReport": {
+      "title": "Weekly Report",
+      "description": "Weekly consolidated social media performance intelligence report for Memorialize Art",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "weekNumber": { "type": "number" },
+        "dateRange": { "type": "string" },
+        "clientName": { "type": "string" },
+        "preparedBy": { "type": "string" },
+        "executiveSummary": { "type": "object" },
+        "evergreenEngine": { "type": "object" },
+        "newEngine": { "type": "object" },
+        "topPerformingContent": { "type": "object" },
+        "engagementAndRetention": { "type": "object" },
+        "emotionalThemesMatrix": { "type": "object" },
+        "operationalIntegrity": { "type": "object" },
+        "strategicInsights": { "type": "object" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "weekNumber", "dateRange", "executiveSummary"]
+    }
+  },
+  "firestore": {
+    "/weeklyReports/{reportId}": {
+      "schema": "WeeklyReport",
+      "description": "Collection of weekly social media performance reports for Memorialize Art"
+    }
+  }
+}

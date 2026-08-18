@@ -16,11 +16,16 @@ import { ReportEditorModal } from './components/ReportEditorModal';
 import { 
   Printer, 
   Layers, 
-  Trash2,
   UploadCloud,
-  FileSpreadsheet
+  CloudCheck
 } from 'lucide-react';
 import { formatNumber, formatPercent } from './utils/formatters';
+import { 
+  subscribeToWeeklyReports, 
+  saveReportToFirestore, 
+  deleteReportFromFirestore, 
+  seedInitialReportsIfEmpty 
+} from './lib/firebase';
 
 const STORAGE_KEY = 'memorialize_weekly_reports_v2';
 
@@ -40,24 +45,51 @@ export default function App() {
     return [...INITIAL_REPORTS].sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
   });
 
-  // Recent week is always first
-  const sortedReports = [...reports].sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
-
   const [selectedReportId, setSelectedReportId] = useState<string>(() => {
-    return sortedReports[0]?.id || 'week-4';
+    return reports[0]?.id || 'week-4';
   });
   
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
+  const [isCloudSynced, setIsCloudSynced] = useState(false);
 
-  // Sync to local storage
+  // Initialize Firestore subscription and seed if empty
+  useEffect(() => {
+    // Seed initial reports if cloud is empty
+    seedInitialReportsIfEmpty(INITIAL_REPORTS);
+
+    // Subscribe to real-time cloud updates
+    const unsubscribe = subscribeToWeeklyReports(
+      (cloudReports) => {
+        if (cloudReports && cloudReports.length > 0) {
+          setReports(cloudReports);
+          setIsCloudSynced(true);
+          // If current selected report is missing, select the first/newest report
+          setSelectedReportId((currentId) => {
+            const exists = cloudReports.some((r) => r.id === currentId);
+            return exists ? currentId : cloudReports[0].id;
+          });
+        }
+      },
+      (error) => {
+        console.warn('Using local fallback due to Firestore sync issue:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // Sort descending by weekNumber so most recent week is always first
+  const sortedReports = [...reports].sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
+
+  // Sync to local storage as fallback
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(sortedReports));
     } catch (e) {
       console.warn('Could not save reports to localStorage', e);
     }
-  }, [reports]);
+  }, [sortedReports]);
 
   // Current active report
   const currentReport = sortedReports.find((r) => r.id === selectedReportId) || sortedReports[0];
@@ -65,8 +97,9 @@ export default function App() {
   // Previous report for WoW comparisons
   const previousReport = currentReport ? sortedReports.find((r) => r.weekNumber === currentReport.weekNumber - 1) : undefined;
 
-  // Handle saving an updated or newly imported report
-  const handleSaveReport = (reportToSave: WeeklyReport) => {
+  // Handle saving an updated or newly imported report to Cloud Firestore
+  const handleSaveReport = async (reportToSave: WeeklyReport) => {
+    // Optimistic local update
     setReports((prevReports) => {
       const existingIdx = prevReports.findIndex((r) => r.id === reportToSave.id || r.weekNumber === reportToSave.weekNumber);
       let updated: WeeklyReport[];
@@ -80,16 +113,24 @@ export default function App() {
     });
     setSelectedReportId(reportToSave.id);
     setActiveTab('dashboard');
+
+    // Save to Cloud Firestore
+    try {
+      await saveReportToFirestore(reportToSave);
+    } catch (err) {
+      console.error('Failed to sync report to Firestore:', err);
+    }
   };
 
-  // Handle deleting a whole report (e.g. Week 4) so user can re-import a PDF
-  const handleDeleteReport = (reportId: string) => {
+  // Handle deleting a whole report (e.g. Week 4) from Cloud Firestore
+  const handleDeleteReport = async (reportId: string) => {
     const reportToDelete = reports.find((r) => r.id === reportId);
     const confirmMessage = reportToDelete 
       ? `Are you sure you want to delete Week ${reportToDelete.weekNumber} report? You can re-import a PDF to regenerate it anytime.`
       : 'Are you sure you want to delete this report?';
 
     if (window.confirm(confirmMessage)) {
+      // Optimistic local removal
       setReports((prevReports) => {
         const filtered = prevReports.filter((r) => r.id !== reportId);
         if (filtered.length > 0) {
@@ -100,6 +141,13 @@ export default function App() {
         }
         return filtered;
       });
+
+      // Delete from Cloud Firestore
+      try {
+        await deleteReportFromFirestore(reportId);
+      } catch (err) {
+        console.error('Failed to delete report from Firestore:', err);
+      }
     }
   };
 
@@ -144,60 +192,69 @@ export default function App() {
         {activeTab === 'dashboard' && currentReport && (
           <div className="space-y-6 animate-fadeIn">
             {/* Quick Section Anchor Pills for smooth scanning */}
-            <nav 
-              aria-label="Section Navigation"
-              className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs text-stone-600 scrollbar-none"
-            >
-              <span className="font-semibold text-stone-500 uppercase text-[10px] mr-1">Sections:</span>
-              <a 
-                href="#section-executive-summary" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+            <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 text-xs text-stone-600 scrollbar-none">
+              <nav 
+                aria-label="Section Navigation"
+                className="flex items-center gap-1.5"
               >
-                1. Executive Summary
-              </a>
-              <a 
-                href="#section-evergreen-engine" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-              >
-                2. Evergreen Engine
-              </a>
-              <a 
-                href="#section-new-engine" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-              >
-                3. New Engine
-              </a>
-              <a 
-                href="#section-top-content" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-              >
-                4. Top Content
-              </a>
-              <a 
-                href="#section-retention-trackers" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-              >
-                5. Retention Trackers
-              </a>
-              <a 
-                href="#section-emotional-themes" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-              >
-                6. Emotional Themes
-              </a>
-              <a 
-                href="#section-operational-integrity" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-              >
-                7. Integrity Log
-              </a>
-              <a 
-                href="#section-strategic-insights" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
-              >
-                8. Strategic Insights
-              </a>
-            </nav>
+                <span className="font-semibold text-stone-500 uppercase text-[10px] mr-1">Sections:</span>
+                <a 
+                  href="#section-executive-summary" 
+                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                >
+                  1. Executive Summary
+                </a>
+                <a 
+                  href="#section-evergreen-engine" 
+                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                >
+                  2. Evergreen Engine
+                </a>
+                <a 
+                  href="#section-new-engine" 
+                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                >
+                  3. New Engine
+                </a>
+                <a 
+                  href="#section-top-content" 
+                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                >
+                  4. Top Content
+                </a>
+                <a 
+                  href="#section-retention-trackers" 
+                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                >
+                  5. Retention Trackers
+                </a>
+                <a 
+                  href="#section-emotional-themes" 
+                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                >
+                  6. Emotional Themes
+                </a>
+                <a 
+                  href="#section-operational-integrity" 
+                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                >
+                  7. Integrity Log
+                </a>
+                <a 
+                  href="#section-strategic-insights" 
+                  className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                >
+                  8. Strategic Insights
+                </a>
+              </nav>
+
+              {isCloudSynced && (
+                <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-stone-500 font-medium shrink-0 bg-white border border-stone-200 px-2.5 py-1 rounded-md">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span>Cloud Synced</span>
+                </div>
+              )}
+            </div>
 
             {/* Section 1: Executive Summary */}
             <ExecutiveSummarySection report={currentReport} />
