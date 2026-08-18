@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { INITIAL_REPORTS } from './data/mockReports';
-import { WeeklyReport, ActiveTab } from './types';
+import { WeeklyReport, ActiveTab, EvergreenPlatformData, NewEnginePlatformData, PlatformComparison } from './types';
 import { Header } from './components/Header';
 import { ExecutiveSummarySection } from './components/ExecutiveSummarySection';
 import { EvergreenEngineSection } from './components/EvergreenEngineSection';
@@ -13,13 +13,18 @@ import { StrategicInsightsSection } from './components/StrategicInsightsSection'
 import { ComparisonView } from './components/ComparisonView';
 import { UploadView } from './components/UploadView';
 import { ReportEditorModal } from './components/ReportEditorModal';
+import { QuickEditFloatingBar } from './components/QuickEditFloatingBar';
 import { 
   Printer, 
   Layers, 
   UploadCloud,
-  CloudCheck
+  CheckCircle,
+  ExternalLink,
+  Edit3,
+  Sparkles
 } from 'lucide-react';
 import { formatNumber, formatPercent } from './utils/formatters';
+import { recomputeReport } from './utils/recomputeReport';
 import { 
   subscribeToWeeklyReports, 
   saveReportToFirestore, 
@@ -53,18 +58,31 @@ export default function App() {
   const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
   const [isCloudSynced, setIsCloudSynced] = useState(false);
 
+  // Quick Edit Mode state
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
+  const [isRecomputing, setIsRecomputing] = useState<boolean>(false);
+  const [recomputeNotice, setRecomputeNotice] = useState<string | null>(null);
+  
+  // Snapshot for discarding edits
+  const originalReportRef = useRef<WeeklyReport | null>(null);
+  const recomputeTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Initialize Firestore subscription and seed if empty
   useEffect(() => {
-    // Seed initial reports if cloud is empty
     seedInitialReportsIfEmpty(INITIAL_REPORTS);
 
-    // Subscribe to real-time cloud updates
     const unsubscribe = subscribeToWeeklyReports(
       (cloudReports) => {
         if (cloudReports && cloudReports.length > 0) {
-          setReports(cloudReports);
+          // If the user is currently editing, don't clobber active draft unless they haven't made unsaved changes
+          setReports((prev) => {
+            if (isEditMode && hasUnsavedChanges) {
+              return prev;
+            }
+            return cloudReports;
+          });
           setIsCloudSynced(true);
-          // If current selected report is missing, select the first/newest report
           setSelectedReportId((currentId) => {
             const exists = cloudReports.some((r) => r.id === currentId);
             return exists ? currentId : cloudReports[0].id;
@@ -77,7 +95,7 @@ export default function App() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [isEditMode, hasUnsavedChanges]);
 
   // Sort descending by weekNumber so most recent week is always first
   const sortedReports = [...reports].sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
@@ -97,32 +115,223 @@ export default function App() {
   // Previous report for WoW comparisons
   const previousReport = currentReport ? sortedReports.find((r) => r.weekNumber === currentReport.weekNumber - 1) : undefined;
 
+  // Store original report when entering edit mode
+  const handleToggleEditMode = () => {
+    if (!isEditMode && currentReport) {
+      originalReportRef.current = JSON.parse(JSON.stringify(currentReport));
+      setIsEditMode(true);
+    } else {
+      setIsEditMode(false);
+      setHasUnsavedChanges(false);
+      setRecomputeNotice(null);
+    }
+  };
+
+  // Helper to schedule a debounced recomputation of the current report
+  const scheduleRecompute = useCallback((draftReport: WeeklyReport) => {
+    setHasUnsavedChanges(true);
+    setIsRecomputing(true);
+
+    if (recomputeTimerRef.current) {
+      clearTimeout(recomputeTimerRef.current);
+    }
+
+    recomputeTimerRef.current = setTimeout(() => {
+      const recomputed = recomputeReport(draftReport);
+      setReports((prev) =>
+        prev.map((r) => (r.id === recomputed.id ? recomputed : r))
+      );
+      setIsRecomputing(false);
+      setRecomputeNotice('✨ Auto-recomputed all affected totals');
+      setTimeout(() => setRecomputeNotice(null), 3000);
+    }, 450);
+  }, []);
+
+  // Update Evergreen Platform Data (e.g. Facebook Evergreen views, followers, visits)
+  const handleUpdateEvergreenPlatform = (index: number, updatedFields: Partial<EvergreenPlatformData>) => {
+    if (!currentReport) return;
+    const newPlatforms = [...currentReport.evergreenEngine.platforms];
+    newPlatforms[index] = {
+      ...newPlatforms[index],
+      ...updatedFields,
+    };
+
+    const draftReport: WeeklyReport = {
+      ...currentReport,
+      evergreenEngine: {
+        ...currentReport.evergreenEngine,
+        platforms: newPlatforms,
+      },
+    };
+
+    // Update state immediately for reactive inputs
+    setReports((prev) =>
+      prev.map((r) => (r.id === draftReport.id ? draftReport : r))
+    );
+
+    // Schedule debounced formula recomputation
+    scheduleRecompute(draftReport);
+  };
+
+  // Update Evergreen Narrative
+  const handleUpdateEvergreenNarrative = (narrative: string) => {
+    if (!currentReport) return;
+    const draftReport: WeeklyReport = {
+      ...currentReport,
+      evergreenEngine: {
+        ...currentReport.evergreenEngine,
+        narrative,
+      },
+    };
+    setReports((prev) =>
+      prev.map((r) => (r.id === draftReport.id ? draftReport : r))
+    );
+    setHasUnsavedChanges(true);
+  };
+
+  // Update New Engine Platform Data
+  const handleUpdateNewEnginePlatform = (index: number, updatedFields: Partial<NewEnginePlatformData>) => {
+    if (!currentReport) return;
+    const newPlatforms = [...currentReport.newEngine.platforms];
+    newPlatforms[index] = {
+      ...newPlatforms[index],
+      ...updatedFields,
+    };
+
+    const draftReport: WeeklyReport = {
+      ...currentReport,
+      newEngine: {
+        ...currentReport.newEngine,
+        platforms: newPlatforms,
+      },
+    };
+
+    setReports((prev) =>
+      prev.map((r) => (r.id === draftReport.id ? draftReport : r))
+    );
+
+    scheduleRecompute(draftReport);
+  };
+
+  // Update New Engine Narrative
+  const handleUpdateNewEngineNarrative = (narrative: string) => {
+    if (!currentReport) return;
+    const draftReport: WeeklyReport = {
+      ...currentReport,
+      newEngine: {
+        ...currentReport.newEngine,
+        narrative,
+      },
+    };
+    setReports((prev) =>
+      prev.map((r) => (r.id === draftReport.id ? draftReport : r))
+    );
+    setHasUnsavedChanges(true);
+  };
+
+  // Update Executive Summary Fields
+  const handleUpdateExecutiveSummary = (updatedFields: Partial<WeeklyReport['executiveSummary']>) => {
+    if (!currentReport) return;
+    const draftReport: WeeklyReport = {
+      ...currentReport,
+      executiveSummary: {
+        ...currentReport.executiveSummary,
+        ...updatedFields,
+      },
+    };
+    setReports((prev) =>
+      prev.map((r) => (r.id === draftReport.id ? draftReport : r))
+    );
+    scheduleRecompute(draftReport);
+  };
+
+  // Update Platform Comparison
+  const handleUpdatePlatformComparison = (index: number, updatedFields: Partial<PlatformComparison>) => {
+    if (!currentReport) return;
+    const newComps = [...currentReport.executiveSummary.platformComparisons];
+    newComps[index] = {
+      ...newComps[index],
+      ...updatedFields,
+    };
+    const draftReport: WeeklyReport = {
+      ...currentReport,
+      executiveSummary: {
+        ...currentReport.executiveSummary,
+        platformComparisons: newComps,
+      },
+    };
+    setReports((prev) =>
+      prev.map((r) => (r.id === draftReport.id ? draftReport : r))
+    );
+    scheduleRecompute(draftReport);
+  };
+
+  // Save current report from inline Quick Edit to Cloud Firestore
+  const handleSaveQuickEdits = async () => {
+    if (!currentReport) return;
+    const finalReport = recomputeReport(currentReport);
+    
+    // Save to local and Firestore
+    await handleSaveReport(finalReport);
+    setHasUnsavedChanges(false);
+    setIsEditMode(false);
+    originalReportRef.current = null;
+    setRecomputeNotice('Changes saved and synced to cloud database!');
+    setTimeout(() => setRecomputeNotice(null), 3000);
+  };
+
+  // Discard inline edits and revert back to snapshot
+  const handleDiscardQuickEdits = () => {
+    if (originalReportRef.current) {
+      const restored = originalReportRef.current;
+      setReports((prev) =>
+        prev.map((r) => (r.id === restored.id ? restored : r))
+      );
+    }
+    setHasUnsavedChanges(false);
+    setIsEditMode(false);
+    setRecomputeNotice(null);
+  };
+
+  // Force immediate recomputation
+  const handleForceRecompute = () => {
+    if (!currentReport) return;
+    const recomputed = recomputeReport(currentReport);
+    setReports((prev) =>
+      prev.map((r) => (r.id === recomputed.id ? recomputed : r))
+    );
+    setRecomputeNotice('✓ Metrics recalculated with exact formulas');
+    setTimeout(() => setRecomputeNotice(null), 2500);
+  };
+
   // Handle saving an updated or newly imported report to Cloud Firestore
   const handleSaveReport = async (reportToSave: WeeklyReport) => {
+    const recomputed = recomputeReport(reportToSave);
+
     // Optimistic local update
     setReports((prevReports) => {
-      const existingIdx = prevReports.findIndex((r) => r.id === reportToSave.id || r.weekNumber === reportToSave.weekNumber);
+      const existingIdx = prevReports.findIndex((r) => r.id === recomputed.id || r.weekNumber === recomputed.weekNumber);
       let updated: WeeklyReport[];
       if (existingIdx >= 0) {
         updated = [...prevReports];
-        updated[existingIdx] = reportToSave;
+        updated[existingIdx] = recomputed;
       } else {
-        updated = [reportToSave, ...prevReports];
+        updated = [recomputed, ...prevReports];
       }
       return updated.sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
     });
-    setSelectedReportId(reportToSave.id);
+    setSelectedReportId(recomputed.id);
     setActiveTab('dashboard');
 
     // Save to Cloud Firestore
     try {
-      await saveReportToFirestore(reportToSave);
+      await saveReportToFirestore(recomputed);
     } catch (err) {
       console.error('Failed to sync report to Firestore:', err);
     }
   };
 
-  // Handle deleting a whole report (e.g. Week 4) from Cloud Firestore
+  // Handle deleting a whole report from Cloud Firestore
   const handleDeleteReport = async (reportId: string) => {
     const reportToDelete = reports.find((r) => r.id === reportId);
     const confirmMessage = reportToDelete 
@@ -130,7 +339,6 @@ export default function App() {
       : 'Are you sure you want to delete this report?';
 
     if (window.confirm(confirmMessage)) {
-      // Optimistic local removal
       setReports((prevReports) => {
         const filtered = prevReports.filter((r) => r.id !== reportId);
         if (filtered.length > 0) {
@@ -142,7 +350,6 @@ export default function App() {
         return filtered;
       });
 
-      // Delete from Cloud Firestore
       try {
         await deleteReportFromFirestore(reportId);
       } catch (err) {
@@ -157,7 +364,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900 flex flex-col font-sans selection:bg-stone-900 selection:text-white">
-      {/* Sticky Clean Header */}
+      {/* Sticky Clean Header with Quick Edit Controls */}
       <Header
         reports={sortedReports}
         selectedReportId={selectedReportId}
@@ -167,10 +374,16 @@ export default function App() {
         onOpenUploadModal={() => setActiveTab('upload')}
         onOpenEditorModal={() => setIsEditorModalOpen(true)}
         onDeleteReport={handleDeleteReport}
+        isEditMode={isEditMode}
+        onToggleEditMode={handleToggleEditMode}
+        hasUnsavedChanges={hasUnsavedChanges}
+        isRecomputing={isRecomputing}
+        recomputeNotice={recomputeNotice}
+        onSaveChanges={handleSaveQuickEdits}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24">
         {/* If no reports exist */}
         {sortedReports.length === 0 && (
           <div className="bg-white rounded-xl border border-stone-200 p-12 text-center shadow-sm space-y-4">
@@ -192,29 +405,66 @@ export default function App() {
         {activeTab === 'dashboard' && currentReport && (
           <div className="space-y-6 animate-fadeIn">
             {/* Report Top Meta & Sync Bar */}
-            <div className="flex items-center justify-between gap-2 text-xs text-stone-600">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-stone-600 bg-white p-3 rounded-xl border border-stone-200 shadow-2xs">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-stone-900">Week {currentReport.weekNumber} Overview</span>
-                <span className="text-stone-400">•</span>
-                <span className="text-stone-600">{currentReport.dateRange}</span>
+                <span className="font-bold text-stone-900 text-sm">Week {currentReport.weekNumber} Executive Dashboard</span>
+                <span className="text-stone-300">•</span>
+                <span className="text-stone-600 font-medium">{currentReport.dateRange}</span>
+                {isEditMode && (
+                  <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-bold border border-amber-300">
+                    <Edit3 className="w-3 h-3" />
+                    <span>Quick Edit Enabled</span>
+                  </span>
+                )}
               </div>
 
-              {isCloudSynced && (
-                <div className="flex items-center gap-1.5 text-[11px] text-stone-600 font-medium shrink-0 bg-white border border-stone-200 px-2.5 py-1 rounded-md shadow-2xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>Cloud Synced</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://MOAEdigitals.github.io/MA-Weekly-Report/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-stone-600 hover:text-stone-900 font-medium px-2 py-0.5 rounded bg-stone-50 border border-stone-200 transition-colors"
+                  title="Official Report Repository Link"
+                >
+                  <span>MOAEdigitals.github.io/MA-Weekly-Report</span>
+                  <ExternalLink className="w-3 h-3 text-stone-400" />
+                </a>
+
+                {isCloudSynced && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-stone-600 font-medium shrink-0 bg-stone-50 border border-stone-200 px-2 py-0.5 rounded">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Cloud Database Synced</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Section 1: Executive Summary */}
-            <ExecutiveSummarySection report={currentReport} />
+            <ExecutiveSummarySection 
+              report={currentReport} 
+              isEditMode={isEditMode}
+              onToggleEditMode={handleToggleEditMode}
+              onUpdateExecutiveSummary={handleUpdateExecutiveSummary}
+              onUpdatePlatformComparison={handleUpdatePlatformComparison}
+            />
 
             {/* Section 2: Evergreen Engine */}
-            <EvergreenEngineSection report={currentReport} />
+            <EvergreenEngineSection 
+              report={currentReport} 
+              isEditMode={isEditMode}
+              onToggleEditMode={handleToggleEditMode}
+              onUpdateEvergreenPlatform={handleUpdateEvergreenPlatform}
+              onUpdateNarrative={handleUpdateEvergreenNarrative}
+            />
 
             {/* Section 3: New Engine */}
-            <NewEngineSection report={currentReport} />
+            <NewEngineSection 
+              report={currentReport} 
+              isEditMode={isEditMode}
+              onToggleEditMode={handleToggleEditMode}
+              onUpdateNewEnginePlatform={handleUpdateNewEnginePlatform}
+              onUpdateNarrative={handleUpdateNewEngineNarrative}
+            />
 
             {/* Section 4: Top Performing Content */}
             <TopPerformingSection report={currentReport} />
@@ -463,6 +713,19 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Floating Action Bar for Quick Edit Mode */}
+      <QuickEditFloatingBar
+        isEditMode={isEditMode}
+        hasUnsavedChanges={hasUnsavedChanges}
+        isRecomputing={isRecomputing}
+        recomputeNotice={recomputeNotice}
+        weekNumber={currentReport?.weekNumber || 4}
+        onSaveChanges={handleSaveQuickEdits}
+        onDiscardChanges={handleDiscardQuickEdits}
+        onForceRecompute={handleForceRecompute}
+        onToggleEditMode={handleToggleEditMode}
+      />
 
       {/* Live Metric Editor Modal */}
       {isEditorModalOpen && currentReport && (

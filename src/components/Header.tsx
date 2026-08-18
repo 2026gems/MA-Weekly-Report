@@ -8,7 +8,12 @@ import {
   Printer, 
   Calendar, 
   Trash2,
-  Plus
+  Plus,
+  Edit3,
+  Save,
+  Check,
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -20,6 +25,12 @@ interface HeaderProps {
   onOpenUploadModal: () => void;
   onOpenEditorModal: () => void;
   onDeleteReport: (reportId: string) => void;
+  isEditMode?: boolean;
+  onToggleEditMode?: () => void;
+  hasUnsavedChanges?: boolean;
+  isRecomputing?: boolean;
+  recomputeNotice?: string | null;
+  onSaveChanges?: () => void;
 }
 
 const DASHBOARD_SECTIONS = [
@@ -42,6 +53,12 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenUploadModal,
   onOpenEditorModal,
   onDeleteReport,
+  isEditMode = false,
+  onToggleEditMode,
+  hasUnsavedChanges = false,
+  isRecomputing = false,
+  recomputeNotice = null,
+  onSaveChanges,
 }) => {
   const currentReport = reports.find((r) => r.id === selectedReportId) || reports[0];
   const sortedReports = [...reports].sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
@@ -97,6 +114,16 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700 font-medium">
                   Social Intelligence Dashboard
                 </span>
+                <a
+                  href="https://MOAEdigitals.github.io/MA-Weekly-Report/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden xl:inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-stone-800/80 text-stone-400 hover:text-stone-200 border border-stone-700 transition-colors"
+                  title="Live GitHub Pages Deployment"
+                >
+                  <span>MOAEdigitals.github.io/MA-Weekly-Report</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </a>
               </div>
               <p className="text-[11px] text-stone-400 mt-0.5">
                 Weekly Performance Reports • Prepared by <span className="text-stone-200 font-semibold">MOAE Digitals</span>
@@ -104,8 +131,37 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Action Buttons: Import PDF & Edit */}
+          {/* Action Buttons: Import PDF, Quick Edit & Save */}
           <div className="flex items-center gap-2">
+            {/* Quick Edit Toggle Button */}
+            {onToggleEditMode && currentReport && activeTab === 'dashboard' && (
+              <button
+                id="quick-edit-mode-toggle-btn"
+                onClick={onToggleEditMode}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-sm ${
+                  isEditMode
+                    ? 'bg-amber-400 hover:bg-amber-300 text-stone-950 ring-2 ring-amber-400/40'
+                    : 'bg-stone-800 hover:bg-stone-700 text-amber-300 border border-amber-500/40'
+                }`}
+                title="Toggle inline editing of fields and numbers on the dashboard"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>{isEditMode ? '✓ Editing Mode ON' : '✏️ Quick Edit Fields'}</span>
+              </button>
+            )}
+
+            {/* Quick Save when in Edit Mode */}
+            {isEditMode && onSaveChanges && (
+              <button
+                onClick={onSaveChanges}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer shadow-sm animate-pulse"
+                title="Save changes to cloud database"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Save Changes</span>
+              </button>
+            )}
+
             <button
               id="import-pdf-header-btn"
               onClick={onOpenUploadModal}
@@ -122,9 +178,9 @@ export const Header: React.FC<HeaderProps> = ({
                   id="edit-report-header-btn"
                   onClick={onOpenEditorModal}
                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 text-xs font-medium transition-colors cursor-pointer"
-                  title="Edit Current Week Metrics"
+                  title="Full Modal Metrics Editor"
                 >
-                  <span>Edit Metrics</span>
+                  <span>Edit Dialog</span>
                 </button>
 
                 <button
@@ -257,7 +313,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Pinned Section Navigation Bar (Permanently pinned when scrolling the dashboard) */}
+      {/* Pinned Section Navigation Bar */}
       {activeTab === 'dashboard' && currentReport && (
         <div id="pinned-sections-navbar" className="bg-stone-900/95 backdrop-blur-md border-t border-stone-800/80 px-4 sm:px-6 lg:px-8 py-1.5 shadow-inner">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
@@ -290,3 +346,4 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+
