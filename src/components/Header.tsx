@@ -114,16 +114,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700 font-medium">
                   Social Intelligence Dashboard
                 </span>
-                <a
-                  href="https://MOAEdigitals.github.io/MA-Weekly-Report/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hidden xl:inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-stone-800/80 text-stone-400 hover:text-stone-200 border border-stone-700 transition-colors"
-                  title="Live GitHub Pages Deployment"
-                >
-                  <span>MOAEdigitals.github.io/MA-Weekly-Report</span>
-                  <ExternalLink className="w-2.5 h-2.5" />
-                </a>
               </div>
               <p className="text-[11px] text-stone-400 mt-0.5">
                 Weekly Performance Reports • Prepared by <span className="text-stone-200 font-semibold">MOAE Digitals</span>

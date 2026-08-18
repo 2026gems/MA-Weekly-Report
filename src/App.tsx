@@ -419,17 +419,6 @@ export default function App() {
               </div>
 
               <div className="flex items-center gap-2">
-                <a
-                  href="https://MOAEdigitals.github.io/MA-Weekly-Report/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[11px] text-stone-600 hover:text-stone-900 font-medium px-2 py-0.5 rounded bg-stone-50 border border-stone-200 transition-colors"
-                  title="Official Report Repository Link"
-                >
-                  <span>MOAEdigitals.github.io/MA-Weekly-Report</span>
-                  <ExternalLink className="w-3 h-3 text-stone-400" />
-                </a>
-
                 {isCloudSynced && (
                   <div className="flex items-center gap-1.5 text-[11px] text-stone-600 font-medium shrink-0 bg-stone-50 border border-stone-200 px-2 py-0.5 rounded">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>

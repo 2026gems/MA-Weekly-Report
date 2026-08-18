@@ -49,21 +49,6 @@ export const EvergreenEngineSection: React.FC<Props> = ({
           <span className="px-2.5 py-1 rounded-md bg-stone-100 text-stone-700 font-medium border border-stone-200">
             Total Evergreen Views: <strong>{formatNumber(evergreenEngine.totalEvergreenViews)}</strong> ({evergreenEngine.evergreenSharePercent}% of total)
           </span>
-
-          {onToggleEditMode && (
-            <button
-              onClick={onToggleEditMode}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
-                isEditMode
-                  ? 'bg-amber-500 text-stone-950 hover:bg-amber-400'
-                  : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300'
-              }`}
-              title={isEditMode ? 'Exit Section Editing' : 'Quick Edit Evergreen Numbers & Facebook Views'}
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>{isEditMode ? 'Editing' : 'Quick Edit'}</span>
-            </button>
-          )}
         </div>
       </div>
 

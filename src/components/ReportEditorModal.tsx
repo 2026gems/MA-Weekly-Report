@@ -672,19 +672,6 @@ export const ReportEditorModal: React.FC<Props> = ({ report, onSave, onClose }) 
                   className="w-full p-2 border border-stone-300 rounded-lg font-mono text-[11px]"
                 />
               </div>
-
-              <div className="p-3 bg-stone-50 border border-stone-200 rounded-lg flex items-center justify-between text-xs text-stone-600">
-                <span>Direct GitHub Deployment Link:</span>
-                <a
-                  href="https://MOAEdigitals.github.io/MA-Weekly-Report/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-stone-900 font-semibold underline flex items-center gap-1"
-                >
-                  <span>MOAEdigitals.github.io/MA-Weekly-Report/</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
             </div>
           )}
 
