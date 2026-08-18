@@ -1,6 +1,6 @@
 import React from 'react';
 import { WeeklyReport } from '../types';
-import { Award, Clock, ThumbsUp, Share2, Bookmark, Flame, Video } from 'lucide-react';
+import { Award, Clock, ThumbsUp, Share2, Bookmark, Video, Sparkles } from 'lucide-react';
 import { formatNumber, getPlatformBadgeColor } from '../utils/formatters';
 
 interface Props {
@@ -15,10 +15,10 @@ export const TopPerformingSection: React.FC<Props> = ({ report }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-stone-100 gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span className="w-2 h-2 rounded-full bg-stone-900"></span>
             <h2 className="text-base font-semibold text-stone-900 tracking-tight flex items-center gap-2">
               <span>4. Top-Performing New Content Highlights</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 font-medium">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-900 border border-stone-200 font-medium">
                 Standout Creative
               </span>
             </h2>
@@ -36,11 +36,11 @@ export const TopPerformingSection: React.FC<Props> = ({ report }) => {
       </div>
 
       {/* Summary Narrative Banner */}
-      <div className="my-4 p-4 rounded-lg bg-amber-50/60 border border-amber-200/80 text-xs text-amber-950 leading-relaxed flex items-start gap-3">
-        <Award className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+      <div className="my-4 p-4 rounded-lg bg-stone-50 border border-stone-200 text-xs text-stone-900 leading-relaxed flex items-start gap-3">
+        <Award className="w-4 h-4 text-stone-700 shrink-0 mt-0.5" />
         <div>
           <div className="font-semibold text-stone-900 mb-0.5">Weekly Creative Standout</div>
-          <p>{topPerformingContent.highlightSummary}</p>
+          <p className="text-stone-700">{topPerformingContent.highlightSummary}</p>
         </div>
       </div>
 
@@ -61,8 +61,8 @@ export const TopPerformingSection: React.FC<Props> = ({ report }) => {
                     {post.platform}
                   </span>
                   {post.isCrossPlatformStandout && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">
-                      <Flame className="w-3 h-3 text-amber-600" />
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded bg-stone-100 text-stone-900 border border-stone-300">
+                      <Sparkles className="w-3 h-3 text-stone-700" />
                       Cross-Platform Hit
                     </span>
                   )}
@@ -120,7 +120,7 @@ export const TopPerformingSection: React.FC<Props> = ({ report }) => {
                     <div>Total Watched: <strong>{post.totalWatchTimeFormatted}</strong></div>
                     <div>Avg Watch Time: <strong>{post.avgWatchTimeFormatted}</strong></div>
                     {post.completionRate && (
-                      <div className="text-amber-800 font-medium">{post.completionRate}</div>
+                      <div className="text-stone-800 font-medium">{post.completionRate}</div>
                     )}
                   </div>
                 </div>

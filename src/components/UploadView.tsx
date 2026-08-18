@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { WeeklyReport } from '../types';
-import { UploadCloud, FileText, CheckCircle2, AlertTriangle, ArrowRight, RefreshCw, Layers, ShieldCheck, FileSpreadsheet } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle2, AlertTriangle, RefreshCw, FileSpreadsheet, Layers, ShieldCheck } from 'lucide-react';
 import { formatNumber } from '../utils/formatters';
 
 interface Props {
@@ -11,10 +11,16 @@ interface Props {
 
 export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onCancel }) => {
   const [inputText, setInputText] = useState('');
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [customWeekNumber, setCustomWeekNumber] = useState<number>(() => {
+    const maxWeek = Math.max(...existingReports.map((r) => r.weekNumber || 0), 4);
+    return maxWeek + 1;
+  });
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractedReport, setExtractedReport] = useState<WeeklyReport | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<'pdf' | 'text' | null>(null);
 
   // Missing data points validation checklist
   const [missingWarnings, setMissingWarnings] = useState<string[]>([]);
@@ -23,18 +29,33 @@ export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onC
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
+    setErrorMessage(null);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      setInputText(content);
-    };
-    reader.readAsText(file);
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      setFileType('pdf');
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        // Strip data:application/pdf;base64, prefix
+        const base64Data = result.split(',')[1] || result;
+        setPdfBase64(base64Data);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFileType('text');
+      setPdfBase64(null);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target?.result as string;
+        setInputText(content);
+      };
+      reader.readAsText(file);
+    }
   };
 
   const handleExtractReport = async () => {
-    if (!inputText.trim()) {
-      setErrorMessage('Please paste report notes, CSV text, or upload an export file.');
+    if (!inputText.trim() && !pdfBase64) {
+      setErrorMessage('Please upload a PDF report file or paste raw report notes.');
       return;
     }
 
@@ -47,8 +68,10 @@ export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onC
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: inputText,
-          rawFileName: fileName || 'manual-input',
+          text: inputText || undefined,
+          pdfBase64: pdfBase64 || undefined,
+          customWeekNumber: customWeekNumber || undefined,
+          rawFileName: fileName || 'uploaded-report',
         }),
       });
 
@@ -61,16 +84,16 @@ export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onC
         setExtractedReport(data.report);
         validateExtractedReport(data.report);
       } else {
-        // Fallback demo extraction if server has fallback
-        const nextWeekNum = (existingReports[0]?.weekNumber || 4) + 1;
+        // Fallback demo extraction if API key is in setup
+        const weekNum = customWeekNumber || (existingReports[0]?.weekNumber || 4) + 1;
         const fallbackReport: WeeklyReport = {
-          id: `week-${nextWeekNum}`,
-          weekNumber: nextWeekNum,
+          id: `week-${weekNum}`,
+          weekNumber: weekNum,
           dateRange: 'August 17 – 23, 2026',
           clientName: 'Ahmed (Memorialize)',
           preparedBy: 'MOAE Digitals',
           executiveSummary: {
-            summaryText: `Week ${nextWeekNum} performance report for Memorialize extracted from uploaded analytics.`,
+            summaryText: `Week ${weekNum} performance report for Memorialize extracted from uploaded analytics.`,
             grandCombinedViews: 215000,
             grandCombinedViewsFormatted: '215.0K',
             prevWeekCombinedViews: 201580,
@@ -122,7 +145,7 @@ export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onC
             highlightSummary: 'Grandparent reunion portrait angle generated standout engagement across Facebook and Instagram.',
             posts: [
               {
-                id: `top-post-w${nextWeekNum}-1`,
+                id: `top-post-w${weekNum}-1`,
                 platform: 'Instagram',
                 titleOrHook: '"Pop Pop never got to meet his grandchildren, until now..."',
                 conceptDescription: 'Emotional portrait reveal to grandfather.',
@@ -154,10 +177,10 @@ export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onC
           emotionalThemesMatrix: {
             narrative: 'Grandparent stories and Gifting continue leading in volume and watch time.',
             themes: [
-              { id: 'theme-grandparent', themeName: 'Grandparent & Multigenerational Stories', postVolume: 20, totalViews: 48000, shareOfNewViewsPercent: 62.3, avgViewsPerPost: 2400.0, likes: 1200, comments: 6, shares: 8, watchTimeHours: 182.0, color: '#f97316' },
-              { id: 'theme-gifting', themeName: 'Milestone Gifting & Tributes', postVolume: 21, totalViews: 14000, shareOfNewViewsPercent: 18.1, avgViewsPerPost: 666.6, likes: 410, comments: 3, shares: 4, watchTimeHours: 25.0, color: '#64748b' },
-              { id: 'theme-loss', themeName: 'Parent-Child Loss & Reunification', postVolume: 12, totalViews: 10000, shareOfNewViewsPercent: 13.0, avgViewsPerPost: 833.3, likes: 350, comments: 2, shares: 2, watchTimeHours: 21.0, color: '#475569' },
-              { id: 'theme-wedding', themeName: 'Wedding Honors', postVolume: 10, totalViews: 5000, shareOfNewViewsPercent: 6.5, avgViewsPerPost: 500.0, likes: 190, comments: 1, shares: 1, watchTimeHours: 17.0, color: '#cbd5e1' },
+              { id: 'theme-grandparent', themeName: 'Grandparent & Multigenerational Stories', postVolume: 20, totalViews: 48000, shareOfNewViewsPercent: 62.3, avgViewsPerPost: 2400.0, likes: 1200, comments: 6, shares: 8, watchTimeHours: 182.0, color: '#1e293b' },
+              { id: 'theme-gifting', themeName: 'Milestone Gifting & Tributes', postVolume: 21, totalViews: 14000, shareOfNewViewsPercent: 18.1, avgViewsPerPost: 666.6, likes: 410, comments: 3, shares: 4, watchTimeHours: 25.0, color: '#475569' },
+              { id: 'theme-loss', themeName: 'Parent-Child Loss & Reunification', postVolume: 12, totalViews: 10000, shareOfNewViewsPercent: 13.0, avgViewsPerPost: 833.3, likes: 350, comments: 2, shares: 2, watchTimeHours: 21.0, color: '#64748b' },
+              { id: 'theme-wedding', themeName: 'Wedding Honors', postVolume: 10, totalViews: 5000, shareOfNewViewsPercent: 6.5, avgViewsPerPost: 500.0, likes: 190, comments: 1, shares: 1, watchTimeHours: 17.0, color: '#94a3b8' },
             ],
             consolidated: {
               postVolume: 63,
@@ -201,7 +224,7 @@ export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onC
               currAvgViews: 1222.2,
               avgChangePercent: -2.2,
             },
-            closingSignOff: `End of Week ${nextWeekNum} Consolidated Report. Prepared by MOAE Digitals.`,
+            closingSignOff: `End of Week ${weekNum} Consolidated Report. Prepared by MOAE Digitals.`,
           },
         };
         setExtractedReport(fallbackReport);
@@ -220,9 +243,6 @@ export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onC
     if (!report.executiveSummary?.grandCombinedViews) warnings.push('Grand combined views metric is missing');
     if (!report.newEngine?.medianViewsPerPost) warnings.push('Median views baseline metric is missing');
     if (!report.emotionalThemesMatrix?.themes?.length) warnings.push('Quantified emotional themes matrix has no categories');
-    if (!report.strategicInsights?.closingSignOff?.includes('Prepared by MOAE Digitals')) {
-      warnings.push('Closing signature does not match mandatory format');
-    }
     setMissingWarnings(warnings);
   };
 
@@ -234,14 +254,28 @@ export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onC
   return (
     <div id="upload-view-container" className="space-y-6">
       <div className="bg-white rounded-xl border border-stone-200 p-5 shadow-sm">
-        <div className="pb-4 border-b border-stone-100">
-          <h2 className="text-lg font-bold text-stone-900 tracking-tight flex items-center gap-2">
-            <UploadCloud className="w-5 h-5 text-amber-500" />
-            <span>Upload & Import Weekly Reports</span>
-          </h2>
-          <p className="text-xs text-stone-500 mt-0.5">
-            Drop Metricool exports, Meta Business Suite summaries, CSV watch times, or raw notes to parse and auto-populate the weekly dashboard.
-          </p>
+        <div className="pb-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-stone-900 tracking-tight flex items-center gap-2">
+              <UploadCloud className="w-5 h-5 text-stone-800" />
+              <span>Import PDF Report or Data Dump</span>
+            </h2>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Upload a weekly PDF report, Metricool export, or paste raw notes to automatically extract and populate a full weekly dashboard.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-stone-700">Week Tab Number:</label>
+            <input
+              type="number"
+              min="1"
+              max="99"
+              value={customWeekNumber}
+              onChange={(e) => setCustomWeekNumber(parseInt(e.target.value) || 1)}
+              className="w-20 px-2.5 py-1 text-xs font-semibold bg-stone-50 border border-stone-300 rounded-md text-stone-900 focus:outline-none focus:border-stone-500"
+            />
+          </div>
         </div>
 
         {/* Input Area */}
@@ -250,29 +284,29 @@ export const UploadView: React.FC<Props> = ({ onSaveReport, existingReports, onC
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
-                Option 1: Upload Metricool / MBS / CSV Report File
+                Option 1: Upload PDF Report or CSV File
               </label>
-              <div className="border-2 border-dashed border-stone-300 hover:border-amber-500 rounded-xl p-5 text-center transition-colors bg-stone-50/50 cursor-pointer relative">
+              <div className="border-2 border-dashed border-stone-300 hover:border-stone-500 rounded-xl p-6 text-center transition-colors bg-stone-50/50 cursor-pointer relative">
                 <input
                   id="report-file-input"
                   type="file"
-                  accept=".csv,.txt,.json,.pdf,.doc,.docx"
+                  accept=".pdf,.csv,.txt,.json,.doc,.docx"
                   onChange={handleFileUpload}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
                 <UploadCloud className="w-8 h-8 text-stone-400 mx-auto mb-2" />
-                <p className="text-xs font-semibold text-stone-800">
-                  {fileName ? `Loaded: ${fileName}` : 'Click or Drag & Drop Report File Here'}
+                <p className="text-xs font-semibold text-stone-900">
+                  {fileName ? `File Loaded: ${fileName}` : 'Click or Drag & Drop PDF Report Here'}
                 </p>
                 <p className="text-[11px] text-stone-500 mt-1">
-                  Supports Metricool CSV/PDF exports, Meta Business Suite notes, or text dumps
+                  Supports PDF weekly reports, Metricool exports, or Meta Business Suite CSV
                 </p>
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                <span>Option 2: Or Paste Raw Report Text / CSV</span>
+                <span>Option 2: Or Paste Report Text / Notes</span>
                 <button
                   onClick={() => {
                     setInputText(`WEEK 5 SOCIAL MEDIA PERFORMANCE REPORT
@@ -300,36 +334,36 @@ Parent Loss: 12 posts, 10,000 views, 21 hrs watch time.
 
 End of Week 5 Consolidated Report. Prepared by MOAE Digitals.`);
                   }}
-                  className="text-[11px] text-amber-600 hover:text-amber-700 font-semibold cursor-pointer underline"
+                  className="text-[11px] text-stone-600 hover:text-stone-900 font-semibold cursor-pointer underline"
                 >
                   Load Sample Week 5 Data
                 </button>
               </label>
               <textarea
                 id="raw-report-textarea"
-                rows={10}
+                rows={9}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Paste Metricool export summary, Meta Business Suite metrics, CSV rows, or weekly meeting draft notes..."
-                className="w-full p-3 rounded-lg bg-stone-50 border border-stone-300 text-xs font-mono text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-500 focus:bg-white leading-relaxed"
+                placeholder="Paste Metricool export summary, Meta Business Suite metrics, CSV rows, or weekly report text..."
+                className="w-full p-3 rounded-lg bg-stone-50 border border-stone-300 text-xs font-mono text-stone-800 placeholder-stone-400 focus:outline-none focus:border-stone-500 focus:bg-white leading-relaxed"
               ></textarea>
             </div>
 
             <button
               id="extract-report-btn"
               onClick={handleExtractReport}
-              disabled={isExtracting || !inputText.trim()}
-              className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
+              disabled={isExtracting || (!inputText.trim() && !pdfBase64)}
+              className="w-full py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
             >
               {isExtracting ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Processing & Extracting Report Data...</span>
+                  <span>Parsing & Generating Week {customWeekNumber} Dashboard...</span>
                 </>
               ) : (
                 <>
                   <FileSpreadsheet className="w-4 h-4" />
-                  <span>Parse & Auto-Populate Dashboard</span>
+                  <span>Generate Week {customWeekNumber} Dashboard from PDF / Text</span>
                 </>
               )}
             </button>
@@ -376,7 +410,7 @@ End of Week 5 Consolidated Report. Prepared by MOAE Digitals.`);
                         </div>
                         <div className="bg-stone-50 p-1.5 rounded">
                           <span className="text-[10px] text-stone-400 block uppercase">Median Views</span>
-                          <span className="font-bold text-amber-900">{extractedReport.newEngine.medianViewsPerPost}</span>
+                          <span className="font-bold text-stone-900">{extractedReport.newEngine.medianViewsPerPost}</span>
                         </div>
                       </div>
                     </div>
@@ -402,9 +436,9 @@ End of Week 5 Consolidated Report. Prepared by MOAE Digitals.`);
                     </div>
 
                     {missingWarnings.length > 0 && (
-                      <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+                      <div className="p-3 rounded-lg bg-stone-100 border border-stone-300 text-xs text-stone-800 space-y-1">
                         <div className="font-semibold flex items-center gap-1">
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                          <AlertTriangle className="w-3.5 h-3.5 text-stone-600" />
                           <span>Data Validation Notice:</span>
                         </div>
                         {missingWarnings.map((w, idx) => (
@@ -418,7 +452,7 @@ End of Week 5 Consolidated Report. Prepared by MOAE Digitals.`);
                     <FileText className="w-10 h-10 mx-auto mb-2 text-stone-300" />
                     <p className="text-xs">No report parsed yet.</p>
                     <p className="text-[11px] text-stone-400 mt-1">
-                      Upload a file or paste text on the left to extract and populate.
+                      Upload a PDF report or paste text on the left to generate the dashboard.
                     </p>
                   </div>
                 )}
@@ -429,9 +463,9 @@ End of Week 5 Consolidated Report. Prepared by MOAE Digitals.`);
                   <button
                     id="save-report-btn"
                     onClick={handleSave}
-                    className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
+                    className="w-full py-2.5 px-4 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     <span>Save Week {extractedReport.weekNumber} to Dashboard</span>
                   </button>
                 </div>

@@ -7,7 +7,9 @@ import {
   UploadCloud, 
   Printer, 
   Calendar, 
-  ShieldCheck
+  ShieldCheck,
+  Trash2,
+  Plus
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -18,6 +20,7 @@ interface HeaderProps {
   onTabChange: (tab: ActiveTab) => void;
   onOpenUploadModal: () => void;
   onOpenEditorModal: () => void;
+  onDeleteReport: (reportId: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,117 +31,134 @@ export const Header: React.FC<HeaderProps> = ({
   onTabChange,
   onOpenUploadModal,
   onOpenEditorModal,
+  onDeleteReport,
 }) => {
   const currentReport = reports.find((r) => r.id === selectedReportId) || reports[0];
 
+  // Ensure reports are ordered with the MOST RECENT at the beginning
+  const sortedReports = [...reports].sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
+
   return (
     <header id="main-header" className="bg-stone-900 text-stone-100 border-b border-stone-800 sticky top-0 z-30 shadow-sm">
-      {/* Top Brand & Metadata Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center shadow-inner text-stone-950 font-bold text-lg tracking-tight">
+      {/* Top Brand & Controls Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          {/* Logo & Identity */}
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center text-stone-950 font-bold text-base tracking-tight shadow-sm">
               M
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h1 className="text-xl font-semibold tracking-tight text-white">
+                <h1 className="text-lg font-bold tracking-tight text-white">
                   Memorialize Art
                 </h1>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 font-medium">
-                  Social Media Intelligence
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700 font-medium">
+                  Social Intelligence Dashboard
                 </span>
               </div>
-              <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1.5">
-                <span>Weekly Consolidated Performance</span>
-                <span className="text-stone-600">•</span>
-                <span>Prepared for <strong className="text-stone-300 font-normal">Ahmed</strong> by <strong className="text-amber-400 font-medium">MOAE Digitals</strong></span>
+              <p className="text-[11px] text-stone-400 mt-0.5">
+                Weekly Performance Reports • Prepared for <span className="text-stone-200 font-medium">Ahmed</span> by <span className="text-stone-200 font-medium">MOAE Digitals</span>
               </p>
             </div>
           </div>
 
-          {/* Action buttons & Week Selector Pills */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center bg-stone-800/90 rounded-lg p-1 border border-stone-700">
-              {reports.map((report) => {
-                const isSelected = report.id === selectedReportId;
-                return (
-                  <button
-                    key={report.id}
-                    id={`week-btn-${report.id}`}
-                    onClick={() => onSelectReport(report.id)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-amber-500 text-stone-950 shadow-sm font-semibold'
-                        : 'text-stone-300 hover:text-white hover:bg-stone-700/60'
-                    }`}
-                  >
-                    Week {report.weekNumber}
-                  </button>
-                );
-              })}
-            </div>
-
+          {/* Action Buttons: Import PDF & Edit */}
+          <div className="flex items-center gap-2">
             <button
-              id="upload-report-header-btn"
+              id="import-pdf-header-btn"
               onClick={onOpenUploadModal}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 text-xs font-medium transition-colors cursor-pointer"
-              title="Upload New Report or Raw Analytics"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-white text-stone-950 text-xs font-semibold transition-colors cursor-pointer shadow-sm"
+              title="Import PDF Report or Raw Analytics"
             >
-              <UploadCloud className="w-3.5 h-3.5 text-amber-400" />
-              <span>Import Data</span>
+              <UploadCloud className="w-3.5 h-3.5 text-stone-900" />
+              <span>+ Import PDF Report</span>
             </button>
 
-            <button
-              id="edit-report-header-btn"
-              onClick={onOpenEditorModal}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 text-xs font-medium transition-colors cursor-pointer"
-              title="Edit Current Week's Data Points"
-            >
-              <span>Edit Metrics</span>
-            </button>
+            {currentReport && (
+              <>
+                <button
+                  id="edit-report-header-btn"
+                  onClick={onOpenEditorModal}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 text-xs font-medium transition-colors cursor-pointer"
+                  title="Edit Current Week Metrics"
+                >
+                  <span>Edit Metrics</span>
+                </button>
+
+                <button
+                  id="delete-report-header-btn"
+                  onClick={() => onDeleteReport(currentReport.id)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-stone-800/80 hover:bg-rose-950/60 hover:text-rose-300 text-stone-400 border border-stone-700 hover:border-rose-800 text-xs font-medium transition-colors cursor-pointer"
+                  title={`Delete Week ${currentReport.weekNumber} Report`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Delete Week {currentReport.weekNumber}</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Current Selected Week Quick Info Banner */}
-        {currentReport && (
-          <div className="mt-3 pt-3 border-t border-stone-800/80 flex flex-wrap items-center justify-between text-xs text-stone-400 gap-2">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 text-stone-300">
-                <Calendar className="w-3.5 h-3.5 text-amber-400" />
+        {/* Horizontally Scrollable Week Tabs (Recent week first at the left) */}
+        <div className="mt-3 pt-2.5 border-t border-stone-800/80 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 w-full">
+            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider shrink-0 mr-1">
+              Select Week:
+            </span>
+
+            {sortedReports.map((report) => {
+              const isSelected = report.id === selectedReportId;
+              return (
+                <button
+                  key={report.id}
+                  id={`week-btn-${report.id}`}
+                  onClick={() => onSelectReport(report.id)}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all shrink-0 whitespace-nowrap cursor-pointer ${
+                    isSelected
+                      ? 'bg-stone-100 text-stone-950 font-bold shadow-sm'
+                      : 'bg-stone-800/80 text-stone-300 hover:text-white hover:bg-stone-700 border border-stone-700/60'
+                  }`}
+                >
+                  Week {report.weekNumber}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={onOpenUploadModal}
+              className="px-2.5 py-1 rounded-md text-xs font-medium transition-all shrink-0 whitespace-nowrap bg-stone-800/40 text-stone-400 hover:text-stone-200 hover:bg-stone-800 border border-dashed border-stone-700 flex items-center gap-1 cursor-pointer"
+              title="Add a new week"
+            >
+              <Plus className="w-3 h-3" />
+              <span>New Week</span>
+            </button>
+          </div>
+
+          {currentReport && (
+            <div className="hidden lg:flex items-center gap-2 text-xs text-stone-400 shrink-0">
+              <span className="flex items-center gap-1 text-stone-300">
+                <Calendar className="w-3 h-3 text-stone-400" />
                 <span className="font-semibold text-white">Week {currentReport.weekNumber}</span> ({currentReport.dateRange})
               </span>
-              <span className="text-stone-600">|</span>
-              <span className="flex items-center gap-1 text-stone-300">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                {currentReport.operationalIntegrity.operationalStatus} ({currentReport.operationalIntegrity.totalPublished}/{currentReport.operationalIntegrity.totalScheduled} posts)
-              </span>
             </div>
-
-            <div className="flex items-center gap-3 text-stone-400">
-              <span>Account Views: <strong className="text-stone-100 font-semibold">{currentReport.executiveSummary.grandCombinedViewsFormatted}</strong></span>
-              <span className="text-stone-600">•</span>
-              <span>New Content Views: <strong className="text-amber-400 font-semibold">{currentReport.newEngine.totalNewViews.toLocaleString()}</strong></span>
-              <span className="text-stone-600">•</span>
-              <span>Median Baseline: <strong className="text-emerald-400 font-semibold">{currentReport.newEngine.medianViewsPerPost.toLocaleString()}</strong></span>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="bg-stone-950/80 border-t border-stone-800/60 px-4 sm:px-6 lg:px-8">
+      {/* Main View Navigation Tabs */}
+      <div className="bg-stone-950 border-t border-stone-800 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex space-x-1 overflow-x-auto py-1.5 scrollbar-none">
           <button
             id="tab-dashboard"
             onClick={() => onTabChange('dashboard')}
             className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
               activeTab === 'dashboard'
-                ? 'bg-stone-800 text-amber-400 font-semibold shadow-inner'
+                ? 'bg-stone-800 text-white font-semibold shadow-inner'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
             }`}
           >
-            <BarChart3 className="w-3.5 h-3.5" />
+            <BarChart3 className="w-3.5 h-3.5 text-stone-300" />
             <span>Weekly Dashboard</span>
           </button>
 
@@ -147,12 +167,12 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => onTabChange('comparison')}
             className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
               activeTab === 'comparison'
-                ? 'bg-stone-800 text-amber-400 font-semibold shadow-inner'
+                ? 'bg-stone-800 text-white font-semibold shadow-inner'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
             }`}
           >
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>Growth & WoW Comparison</span>
+            <TrendingUp className="w-3.5 h-3.5 text-stone-300" />
+            <span>Growth & Performance Comparison</span>
           </button>
 
           <button
@@ -160,11 +180,11 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => onTabChange('themes')}
             className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
               activeTab === 'themes'
-                ? 'bg-stone-800 text-amber-400 font-semibold shadow-inner'
+                ? 'bg-stone-800 text-white font-semibold shadow-inner'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
+            <Layers className="w-3.5 h-3.5 text-stone-300" />
             <span>Emotional Themes Matrix</span>
           </button>
 
@@ -173,12 +193,12 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => onTabChange('upload')}
             className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
               activeTab === 'upload'
-                ? 'bg-stone-800 text-amber-400 font-semibold shadow-inner'
+                ? 'bg-stone-800 text-white font-semibold shadow-inner'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
             }`}
           >
-            <UploadCloud className="w-3.5 h-3.5" />
-            <span>Upload & Import Data</span>
+            <UploadCloud className="w-3.5 h-3.5 text-stone-300" />
+            <span>Import PDF Report</span>
           </button>
 
           <button
@@ -186,11 +206,11 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => onTabChange('export')}
             className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors cursor-pointer ${
               activeTab === 'export'
-                ? 'bg-stone-800 text-amber-400 font-semibold shadow-inner'
+                ? 'bg-stone-800 text-white font-semibold shadow-inner'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
             }`}
           >
-            <Printer className="w-3.5 h-3.5" />
+            <Printer className="w-3.5 h-3.5 text-stone-300" />
             <span>Export & PDF View</span>
           </button>
         </div>

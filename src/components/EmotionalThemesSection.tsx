@@ -16,10 +16,10 @@ export const EmotionalThemesSection: React.FC<Props> = ({ report }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-stone-100 gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-600"></span>
+            <span className="w-2 h-2 rounded-full bg-stone-900"></span>
             <h2 className="text-base font-semibold text-stone-900 tracking-tight flex items-center gap-2">
               <span>6. Quantified Emotional Themes Matrix</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 font-medium">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-900 border border-stone-200 font-medium">
                 Narrative Performance
               </span>
             </h2>
@@ -38,7 +38,7 @@ export const EmotionalThemesSection: React.FC<Props> = ({ report }) => {
 
       {/* Narrative block */}
       <div className="my-4 p-3.5 rounded-lg bg-stone-50 border border-stone-200 text-xs text-stone-700 leading-relaxed flex items-start gap-2.5">
-        <HeartHandshake className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <HeartHandshake className="w-4 h-4 text-stone-700 shrink-0 mt-0.5" />
         <p>{emotionalThemesMatrix.narrative}</p>
       </div>
 
@@ -55,8 +55,12 @@ export const EmotionalThemesSection: React.FC<Props> = ({ report }) => {
         </div>
 
         <div className="space-y-3">
-          {emotionalThemesMatrix.themes.map((theme) => {
+          {emotionalThemesMatrix.themes.map((theme, idx) => {
             const widthPercent = Math.max(Math.round((theme.totalViews / maxViews) * 100), 2);
+            // Elegant neutral slate shades
+            const slateShades = ['#1e293b', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1'];
+            const barColor = slateShades[idx % slateShades.length];
+
             return (
               <div key={theme.id || theme.themeName} className="text-xs">
                 <div className="flex items-center justify-between mb-1">
@@ -72,7 +76,7 @@ export const EmotionalThemesSection: React.FC<Props> = ({ report }) => {
                     className="h-full rounded-full transition-all duration-500"
                     style={{
                       width: `${widthPercent}%`,
-                      backgroundColor: theme.color || '#ea580c',
+                      backgroundColor: barColor,
                     }}
                   ></div>
                 </div>
@@ -96,41 +100,45 @@ export const EmotionalThemesSection: React.FC<Props> = ({ report }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-100">
-            {emotionalThemesMatrix.themes.map((theme) => (
-              <tr key={theme.id || theme.themeName} className="hover:bg-stone-50/80 transition-colors">
-                <td className="py-3 px-3">
-                  <div className="font-semibold text-stone-900 flex items-center gap-2">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: theme.color || '#ea580c' }}
-                    ></span>
-                    <span>{theme.themeName}</span>
-                  </div>
-                </td>
+            {emotionalThemesMatrix.themes.map((theme, idx) => {
+              const slateShades = ['#1e293b', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1'];
+              const dotColor = slateShades[idx % slateShades.length];
+              return (
+                <tr key={theme.id || theme.themeName} className="hover:bg-stone-50/80 transition-colors">
+                  <td className="py-3 px-3">
+                    <div className="font-semibold text-stone-900 flex items-center gap-2">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: dotColor }}
+                      ></span>
+                      <span>{theme.themeName}</span>
+                    </div>
+                  </td>
 
-                <td className="py-3 px-3 text-center">
-                  <span className="px-2 py-0.5 rounded bg-stone-100 text-stone-800 font-semibold">
-                    {theme.postVolume}
-                  </span>
-                </td>
+                  <td className="py-3 px-3 text-center">
+                    <span className="px-2 py-0.5 rounded bg-stone-100 text-stone-800 font-semibold">
+                      {theme.postVolume}
+                    </span>
+                  </td>
 
-                <td className="py-3 px-3 font-semibold text-stone-900">
-                  {theme.totalViews.toLocaleString()}
-                </td>
+                  <td className="py-3 px-3 font-semibold text-stone-900">
+                    {theme.totalViews.toLocaleString()}
+                  </td>
 
-                <td className="py-3 px-3 font-medium text-stone-800">
-                  {theme.avgViewsPerPost.toLocaleString()}
-                </td>
+                  <td className="py-3 px-3 font-medium text-stone-800">
+                    {theme.avgViewsPerPost.toLocaleString()}
+                  </td>
 
-                <td className="py-3 px-3 font-medium text-stone-800">
-                  {theme.likes.toLocaleString()} / {theme.comments} / {theme.shares}
-                </td>
+                  <td className="py-3 px-3 font-medium text-stone-800">
+                    {theme.likes.toLocaleString()} / {theme.comments} / {theme.shares}
+                  </td>
 
-                <td className="py-3 px-3 font-semibold text-stone-900">
-                  {theme.watchTimeHours} Hours
-                </td>
-              </tr>
-            ))}
+                  <td className="py-3 px-3 font-semibold text-stone-900">
+                    {theme.watchTimeHours} Hours
+                  </td>
+                </tr>
+              );
+            })}
 
             {/* Consolidated Row */}
             <tr className="bg-stone-50 font-semibold border-t-2 border-stone-200 text-stone-900">
@@ -141,7 +149,7 @@ export const EmotionalThemesSection: React.FC<Props> = ({ report }) => {
               <td className="py-3 px-3">
                 {emotionalThemesMatrix.consolidated.likes.toLocaleString()} / {emotionalThemesMatrix.consolidated.comments} / {emotionalThemesMatrix.consolidated.shares}
               </td>
-              <td className="py-3 px-3 text-amber-900 font-bold">{emotionalThemesMatrix.consolidated.watchTimeHours} Hours</td>
+              <td className="py-3 px-3 text-stone-900 font-bold">{emotionalThemesMatrix.consolidated.watchTimeHours} Hours</td>
             </tr>
           </tbody>
         </table>

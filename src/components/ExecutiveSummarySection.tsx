@@ -15,7 +15,7 @@ export const ExecutiveSummarySection: React.FC<Props> = ({ report }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-stone-100 gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span className="w-2 h-2 rounded-full bg-stone-900"></span>
             <h2 className="text-base font-semibold text-stone-900 tracking-tight">
               1. Executive Summary & Campaign Snapshot
             </h2>
@@ -43,7 +43,7 @@ export const ExecutiveSummarySection: React.FC<Props> = ({ report }) => {
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">
               Total Weekly Views
             </span>
-            <div className="p-1.5 rounded-md bg-amber-100/70 text-amber-700">
+            <div className="p-1.5 rounded-md bg-stone-200 text-stone-800">
               <Eye className="w-4 h-4" />
             </div>
           </div>
@@ -77,7 +77,7 @@ export const ExecutiveSummarySection: React.FC<Props> = ({ report }) => {
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">
               New Content Views
             </span>
-            <div className="p-1.5 rounded-md bg-blue-100/70 text-blue-700">
+            <div className="p-1.5 rounded-md bg-stone-200 text-stone-800">
               <Layers className="w-4 h-4" />
             </div>
           </div>
@@ -103,7 +103,7 @@ export const ExecutiveSummarySection: React.FC<Props> = ({ report }) => {
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">
               Median Baseline / Post
             </span>
-            <div className="p-1.5 rounded-md bg-emerald-100/70 text-emerald-700">
+            <div className="p-1.5 rounded-md bg-stone-200 text-stone-800">
               <Compass className="w-4 h-4" />
             </div>
           </div>
@@ -129,7 +129,7 @@ export const ExecutiveSummarySection: React.FC<Props> = ({ report }) => {
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wider">
               Cumulative Watch Time
             </span>
-            <div className="p-1.5 rounded-md bg-purple-100/70 text-purple-700">
+            <div className="p-1.5 rounded-md bg-stone-200 text-stone-800">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
@@ -202,18 +202,18 @@ export const ExecutiveSummarySection: React.FC<Props> = ({ report }) => {
         </div>
 
         {/* Key Strategic Shift Box */}
-        <div className="rounded-lg bg-amber-50/70 border border-amber-200/80 p-4 flex flex-col justify-between">
+        <div className="rounded-lg bg-stone-50 border border-stone-300 p-4 flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-1.5 text-amber-900 font-semibold text-xs uppercase tracking-wider mb-2">
-              <Compass className="w-4 h-4 text-amber-600" />
+            <div className="flex items-center gap-1.5 text-stone-900 font-semibold text-xs uppercase tracking-wider mb-2">
+              <Compass className="w-4 h-4 text-stone-700" />
               <span>Key Strategic Shift</span>
             </div>
-            <p className="text-xs text-amber-950/90 leading-relaxed font-normal">
+            <p className="text-xs text-stone-800 leading-relaxed font-normal">
               {executiveSummary.keyStrategicShift}
             </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-amber-200/60 flex items-center justify-between text-[11px] text-amber-900">
+          <div className="mt-4 pt-3 border-t border-stone-200 flex items-center justify-between text-[11px] text-stone-700">
             <span>Evergreen Share: <strong>{evergreenEngine.evergreenSharePercent}%</strong></span>
             <span>New Batch: <strong>{100 - Math.round(evergreenEngine.evergreenSharePercent)}%</strong></span>
           </div>

@@ -14,7 +14,7 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
-import { TrendingUp, ArrowRight, Layers, Target, Eye, Clock, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, Layers, Target, Eye, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { formatNumber, formatPercent } from '../utils/formatters';
 
 interface Props {
@@ -76,7 +76,7 @@ export const ComparisonView: React.FC<Props> = ({ reports, selectedReportId }) =
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-stone-100">
           <div>
             <h2 className="text-lg font-bold text-stone-900 tracking-tight flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-amber-500" />
+              <TrendingUp className="w-5 h-5 text-stone-700" />
               <span>Multi-Week Performance Growth & Comparison</span>
             </h2>
             <p className="text-xs text-stone-500 mt-0.5">
@@ -91,7 +91,7 @@ export const ComparisonView: React.FC<Props> = ({ reports, selectedReportId }) =
                 id="select-primary-week"
                 value={primaryWeekId}
                 onChange={(e) => setPrimaryWeekId(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-semibold text-stone-900 focus:outline-none focus:border-amber-500"
+                className="px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-semibold text-stone-900 focus:outline-none focus:border-stone-500"
               >
                 {reports.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -107,7 +107,7 @@ export const ComparisonView: React.FC<Props> = ({ reports, selectedReportId }) =
                 id="select-secondary-week"
                 value={secondaryWeekId}
                 onChange={(e) => setSecondaryWeekId(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-semibold text-stone-900 focus:outline-none focus:border-amber-500"
+                className="px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-semibold text-stone-900 focus:outline-none focus:border-stone-500"
               >
                 {reports.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -172,17 +172,17 @@ export const ComparisonView: React.FC<Props> = ({ reports, selectedReportId }) =
           </div>
 
           {/* Median Views Benchmark */}
-          <div className="p-4 rounded-lg bg-amber-50/70 border border-amber-300">
-            <div className="text-[11px] font-semibold text-amber-900 uppercase tracking-wider flex items-center justify-between">
+          <div className="p-4 rounded-lg bg-stone-100 border border-stone-300">
+            <div className="text-[11px] font-semibold text-stone-800 uppercase tracking-wider flex items-center justify-between">
               <span>Median Baseline Views</span>
-              <span className="text-[9px] bg-amber-200 text-amber-950 font-bold px-1.5 py-0.2 rounded">Core Metric</span>
+              <span className="text-[9px] bg-stone-200 text-stone-900 font-bold px-1.5 py-0.2 rounded">Core Metric</span>
             </div>
             <div className="mt-2 flex items-baseline justify-between">
               <div>
                 <span className="text-xl font-bold text-stone-900">
                   {primaryReport.newEngine.medianViewsPerPost.toLocaleString()}
                 </span>
-                <span className="text-xs text-amber-900/70 block">
+                <span className="text-xs text-stone-500 block">
                   vs {secondaryReport.newEngine.medianViewsPerPost.toLocaleString()} (W{secondaryReport.weekNumber})
                 </span>
               </div>
@@ -228,7 +228,7 @@ export const ComparisonView: React.FC<Props> = ({ reports, selectedReportId }) =
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-stone-100 gap-2">
           <div>
             <h3 className="text-sm font-bold text-stone-900 tracking-tight flex items-center gap-2">
-              <Target className="w-4 h-4 text-amber-500" />
+              <Target className="w-4 h-4 text-stone-700" />
               <span>Creative Baseline Growth Tracker (Median vs Average Views / Post)</span>
             </h3>
             <p className="text-xs text-stone-500 mt-0.5">
@@ -237,11 +237,11 @@ export const ComparisonView: React.FC<Props> = ({ reports, selectedReportId }) =
           </div>
           <div className="flex items-center gap-3 text-xs">
             <span className="flex items-center gap-1.5 text-stone-700">
-              <span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+              <span className="w-3 h-3 rounded-full bg-stone-900 inline-block"></span>
               <span>Median Views (Benchmark)</span>
             </span>
             <span className="flex items-center gap-1.5 text-stone-700">
-              <span className="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+              <span className="w-3 h-3 rounded-full bg-slate-400 inline-block"></span>
               <span>Average Views</span>
             </span>
           </div>
@@ -266,19 +266,19 @@ export const ComparisonView: React.FC<Props> = ({ reports, selectedReportId }) =
                 type="monotone"
                 dataKey="medianViews"
                 name="Median Views / Post"
-                stroke="#f59e0b"
+                stroke="#1c1917"
                 strokeWidth={3}
-                dot={{ r: 5, fill: '#f59e0b', stroke: '#fff', strokeWidth: 2 }}
+                dot={{ r: 5, fill: '#1c1917', stroke: '#fff', strokeWidth: 2 }}
                 activeDot={{ r: 7 }}
               />
               <Line
                 type="monotone"
                 dataKey="avgViews"
                 name="Average Views / Post"
-                stroke="#3b82f6"
+                stroke="#94a3b8"
                 strokeWidth={2}
                 strokeDasharray="4 4"
-                dot={{ r: 4, fill: '#3b82f6' }}
+                dot={{ r: 4, fill: '#94a3b8' }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -290,7 +290,7 @@ export const ComparisonView: React.FC<Props> = ({ reports, selectedReportId }) =
         <div className="bg-white rounded-xl border border-stone-200 p-5 shadow-sm">
           <div className="pb-3 mb-4 border-b border-stone-100">
             <h3 className="text-sm font-bold text-stone-900 tracking-tight flex items-center gap-2">
-              <Layers className="w-4 h-4 text-emerald-600" />
+              <Layers className="w-4 h-4 text-stone-700" />
               <span>Evergreen vs. New Content Views Trajectory</span>
             </h3>
             <p className="text-xs text-stone-500 mt-0.5">
@@ -314,8 +314,8 @@ export const ComparisonView: React.FC<Props> = ({ reports, selectedReportId }) =
                   }}
                 />
                 <Legend />
-                <Bar dataKey="evergreenViews" name="Evergreen Legacy Views" fill="#10b981" stackId="a" />
-                <Bar dataKey="newViews" name="New Batch Views" fill="#3b82f6" stackId="a" />
+                <Bar dataKey="evergreenViews" name="Evergreen Legacy Views" fill="#475569" stackId="a" />
+                <Bar dataKey="newViews" name="New Batch Views" fill="#94a3b8" stackId="a" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -325,7 +325,7 @@ export const ComparisonView: React.FC<Props> = ({ reports, selectedReportId }) =
         <div className="bg-white rounded-xl border border-stone-200 p-5 shadow-sm">
           <div className="pb-3 mb-4 border-b border-stone-100">
             <h3 className="text-sm font-bold text-stone-900 tracking-tight flex items-center gap-2">
-              <Eye className="w-4 h-4 text-purple-600" />
+              <Eye className="w-4 h-4 text-stone-700" />
               <span>Platform Views Evolution (FB vs IG vs TikTok)</span>
             </h3>
             <p className="text-xs text-stone-500 mt-0.5">
@@ -349,9 +349,9 @@ export const ComparisonView: React.FC<Props> = ({ reports, selectedReportId }) =
                   }}
                 />
                 <Legend />
-                <Area type="monotone" dataKey="igViews" name="Instagram Reels" fill="#f43f5e" stroke="#e11d48" fillOpacity={0.2} />
-                <Area type="monotone" dataKey="fbViews" name="Facebook Reels" fill="#3b82f6" stroke="#2563eb" fillOpacity={0.2} />
-                <Area type="monotone" dataKey="ttViews" name="TikTok Posts" fill="#71717a" stroke="#18181b" fillOpacity={0.2} />
+                <Area type="monotone" dataKey="igViews" name="Instagram Reels" fill="#64748b" stroke="#334155" fillOpacity={0.3} />
+                <Area type="monotone" dataKey="fbViews" name="Facebook Reels" fill="#94a3b8" stroke="#475569" fillOpacity={0.3} />
+                <Area type="monotone" dataKey="ttViews" name="TikTok Posts" fill="#cbd5e1" stroke="#64748b" fillOpacity={0.3} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

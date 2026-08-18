@@ -37,27 +37,27 @@ async function startServer() {
     res.json({ status: 'ok', time: new Date().toISOString() });
   });
 
-  // API Route: Extract Weekly Report from Text / CSV / Raw Report Dump
+  // API Route: Extract Weekly Report from PDF, CSV, Text, or Raw Report Dump
   app.post('/api/extract-report', async (req, res) => {
     try {
-      const { text, fileType, rawFileName } = req.body;
+      const { text, pdfBase64, customWeekNumber, customWeekTitle, rawFileName } = req.body;
 
-      if (!text || typeof text !== 'string') {
-        return res.status(400).json({ error: 'Text content is required for report extraction.' });
+      if (!text && !pdfBase64) {
+        return res.status(400).json({ error: 'PDF file or text content is required for report extraction.' });
       }
 
       const ai = getAI();
       if (!ai) {
-        // Return a graceful structured parse fallback if Gemini API key isn't provided
+        // Return structured fallback
         return res.status(200).json({
           fallback: true,
-          message: 'Gemini API not configured, please ensure GEMINI_API_KEY is available or edit fields directly.',
-          extracted: null
+          message: 'Gemini API key not detected. Using structured template generator.',
+          report: null
         });
       }
 
-      const prompt = `You are an expert social media analytics reporting assistant for Memorialize Art, prepared by MOAE Digitals for Ahmed (Memorialize).
-Analyze the provided report text/CSV data and extract all weekly performance metrics into a clean, complete, structured JSON object matching the exact schema.
+      const systemPrompt = `You are an expert social media analytics reporting assistant for Memorialize Art, prepared by MOAE Digitals for Ahmed (Memorialize).
+Analyze the provided report document (PDF, CSV, or text) and extract all weekly performance metrics into a clean, complete, structured JSON object matching the exact schema.
 
 MASTER RULES TO STRICTLY FOLLOW:
 1. NO DEMOGRAPHICS: Do not include Top Countries or Top Cities in the report.
@@ -71,13 +71,34 @@ MASTER RULES TO STRICTLY FOLLOW:
    - Operational & Posting Integrity Log (Scheduled target vs Published, Missed days, Delayed posts)
    - Strategic Insights & Forward-Looking Action Plan (Key weekly learnings, Consistencies vs Fluctuations, Action plan for next week, Baseline tracker)
    - Closing signature: "End of Week [X] Consolidated Report. Prepared by MOAE Digitals."
+${customWeekNumber ? `Note: User designated this as Week ${customWeekNumber}.` : ''}`;
 
-REPORT DATA / TEXT TO PARSE:
-${text}`;
+      let contents: any;
+
+      if (pdfBase64) {
+        contents = [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  mimeType: 'application/pdf',
+                  data: pdfBase64,
+                },
+              },
+              {
+                text: `${systemPrompt}\n\nPlease extract all social media report metrics from this uploaded PDF document.`,
+              },
+            ],
+          },
+        ];
+      } else {
+        contents = `${systemPrompt}\n\nREPORT DATA / TEXT TO PARSE:\n${text}`;
+      }
 
       const response = await ai.models.generateContent({
         model: 'gemini-3.7-flash',
-        contents: prompt,
+        contents,
         config: {
           responseMimeType: 'application/json',
           responseSchema: {
@@ -313,10 +334,11 @@ ${text}`;
       });
 
       const extractedJson = JSON.parse(response.text || '{}');
-      // Assign IDs if missing
-      if (!extractedJson.id) {
-        extractedJson.id = `week-${extractedJson.weekNumber || Date.now()}`;
+      if (customWeekNumber) {
+        extractedJson.weekNumber = Number(customWeekNumber);
       }
+      extractedJson.id = `week-${extractedJson.weekNumber || Date.now()}`;
+
       if (extractedJson.topPerformingContent?.posts) {
         extractedJson.topPerformingContent.posts = extractedJson.topPerformingContent.posts.map((p: any, idx: number) => ({
           ...p,
@@ -334,43 +356,6 @@ ${text}`;
     } catch (err: any) {
       console.error('Extraction Error:', err);
       return res.status(500).json({ error: err.message || 'Failed to extract report data.' });
-    }
-  });
-
-  // API Route: AI Strategic Growth Consultation for Ahmed
-  app.post('/api/ai-insights', async (req, res) => {
-    try {
-      const { currentWeek, previousWeek, promptQuestion } = req.body;
-      const ai = getAI();
-      if (!ai) {
-        return res.json({
-          insight: 'Gemini API not configured. Baseline views and evergreen ratios are performing in line with historical averages.'
-        });
-      }
-
-      const prompt = `You are the lead social media strategist at MOAE Digitals preparing executive growth guidance for Ahmed, founder/director of Memorialize Art.
-Context:
-Current Week: ${JSON.stringify(currentWeek, null, 2)}
-Previous Week: ${JSON.stringify(previousWeek, null, 2)}
-Specific Focus Question from Ahmed: "${promptQuestion || 'How do we accelerate baseline view growth and improve evergreen momentum next week?'}"
-
-Provide a crisp, direct, highly professional 3-4 bullet analysis:
-1. Exact Root Cause of Performance Shifts (Why did views/interactions move the way they did, isolating evergreen vs new).
-2. Creative Motif Resonance (Specific hooks or emotional narrative themes that won or underperformed).
-3. Actionable Next Sprint Tests (2-3 concrete creative hooks/formats to test next week).
-4. Baseline Elevation Verdict (Are median views per post rising sustainably?).
-
-Keep it concise, clear, and actionable.`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.7-flash',
-        contents: prompt,
-      });
-
-      return res.json({ insight: response.text });
-    } catch (err: any) {
-      console.error('Insights Error:', err);
-      return res.status(500).json({ error: err.message || 'Failed to generate strategic insights.' });
     }
   });
 

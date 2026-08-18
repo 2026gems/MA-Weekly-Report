@@ -15,15 +15,9 @@ import { UploadView } from './components/UploadView';
 import { ReportEditorModal } from './components/ReportEditorModal';
 import { 
   Printer, 
-  ChevronRight, 
-  Sparkles, 
   Layers, 
-  TrendingUp, 
-  BarChart3, 
-  Calendar,
-  ShieldCheck,
-  Download,
-  CheckCircle2,
+  Trash2,
+  UploadCloud,
   FileSpreadsheet
 } from 'lucide-react';
 import { formatNumber, formatPercent } from './utils/formatters';
@@ -37,47 +31,76 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
         }
       }
     } catch (e) {
       console.warn('Could not load reports from localStorage', e);
     }
-    return INITIAL_REPORTS;
+    return [...INITIAL_REPORTS].sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
   });
 
-  const [selectedReportId, setSelectedReportId] = useState<string>('week-4');
+  // Recent week is always first
+  const sortedReports = [...reports].sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
+
+  const [selectedReportId, setSelectedReportId] = useState<string>(() => {
+    return sortedReports[0]?.id || 'week-4';
+  });
+  
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
 
   // Sync to local storage
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sortedReports));
     } catch (e) {
       console.warn('Could not save reports to localStorage', e);
     }
   }, [reports]);
 
   // Current active report
-  const currentReport = reports.find((r) => r.id === selectedReportId) || reports[0];
+  const currentReport = sortedReports.find((r) => r.id === selectedReportId) || sortedReports[0];
   
   // Previous report for WoW comparisons
-  const previousReport = reports.find((r) => r.weekNumber === currentReport.weekNumber - 1);
+  const previousReport = currentReport ? sortedReports.find((r) => r.weekNumber === currentReport.weekNumber - 1) : undefined;
 
-  // Handle saving an updated or new report
+  // Handle saving an updated or newly imported report
   const handleSaveReport = (reportToSave: WeeklyReport) => {
     setReports((prevReports) => {
       const existingIdx = prevReports.findIndex((r) => r.id === reportToSave.id || r.weekNumber === reportToSave.weekNumber);
+      let updated: WeeklyReport[];
       if (existingIdx >= 0) {
-        const updated = [...prevReports];
+        updated = [...prevReports];
         updated[existingIdx] = reportToSave;
-        return updated;
+      } else {
+        updated = [reportToSave, ...prevReports];
       }
-      return [reportToSave, ...prevReports].sort((a, b) => b.weekNumber - a.weekNumber);
+      return updated.sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0));
     });
     setSelectedReportId(reportToSave.id);
     setActiveTab('dashboard');
+  };
+
+  // Handle deleting a whole report (e.g. Week 4) so user can re-import a PDF
+  const handleDeleteReport = (reportId: string) => {
+    const reportToDelete = reports.find((r) => r.id === reportId);
+    const confirmMessage = reportToDelete 
+      ? `Are you sure you want to delete Week ${reportToDelete.weekNumber} report? You can re-import a PDF to regenerate it anytime.`
+      : 'Are you sure you want to delete this report?';
+
+    if (window.confirm(confirmMessage)) {
+      setReports((prevReports) => {
+        const filtered = prevReports.filter((r) => r.id !== reportId);
+        if (filtered.length > 0) {
+          const nextSelected = filtered.sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0))[0];
+          setSelectedReportId(nextSelected.id);
+        } else {
+          setSelectedReportId('');
+        }
+        return filtered;
+      });
+    }
   };
 
   const handlePrint = () => {
@@ -85,20 +108,38 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100 text-stone-900 flex flex-col font-sans selection:bg-amber-500 selection:text-stone-950">
+    <div className="min-h-screen bg-stone-100 text-stone-900 flex flex-col font-sans selection:bg-stone-900 selection:text-white">
       {/* Sticky Clean Header */}
       <Header
-        reports={reports}
+        reports={sortedReports}
         selectedReportId={selectedReportId}
         onSelectReport={(id) => setSelectedReportId(id)}
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab)}
         onOpenUploadModal={() => setActiveTab('upload')}
         onOpenEditorModal={() => setIsEditorModalOpen(true)}
+        onDeleteReport={handleDeleteReport}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* If no reports exist */}
+        {sortedReports.length === 0 && (
+          <div className="bg-white rounded-xl border border-stone-200 p-12 text-center shadow-sm space-y-4">
+            <UploadCloud className="w-12 h-12 text-stone-400 mx-auto" />
+            <h2 className="text-lg font-bold text-stone-900">No Weekly Reports Found</h2>
+            <p className="text-xs text-stone-500 max-w-md mx-auto">
+              You can import a PDF report or raw notes to generate a full weekly performance dashboard.
+            </p>
+            <button
+              onClick={() => setActiveTab('upload')}
+              className="px-4 py-2 rounded-lg bg-stone-900 text-white text-xs font-semibold hover:bg-stone-800 transition-colors cursor-pointer"
+            >
+              + Import PDF Report
+            </button>
+          </div>
+        )}
+
         {/* TAB 1: Weekly Dashboard View */}
         {activeTab === 'dashboard' && currentReport && (
           <div className="space-y-6 animate-fadeIn">
@@ -110,49 +151,49 @@ export default function App() {
               <span className="font-semibold text-stone-500 uppercase text-[10px] mr-1">Sections:</span>
               <a 
                 href="#section-executive-summary" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-amber-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
               >
                 1. Executive Summary
               </a>
               <a 
                 href="#section-evergreen-engine" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-amber-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
               >
                 2. Evergreen Engine
               </a>
               <a 
                 href="#section-new-engine" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-amber-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
               >
                 3. New Engine
               </a>
               <a 
                 href="#section-top-content" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-amber-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
               >
                 4. Top Content
               </a>
               <a 
                 href="#section-retention-trackers" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-amber-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
               >
                 5. Retention Trackers
               </a>
               <a 
                 href="#section-emotional-themes" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-amber-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
               >
                 6. Emotional Themes
               </a>
               <a 
                 href="#section-operational-integrity" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-amber-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
               >
                 7. Integrity Log
               </a>
               <a 
                 href="#section-strategic-insights" 
-                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-amber-400 hover:text-stone-900 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-md bg-white border border-stone-200 hover:border-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap"
               >
                 8. Strategic Insights
               </a>
@@ -185,9 +226,9 @@ export default function App() {
         )}
 
         {/* TAB 2: Multi-Week Growth & Comparison View */}
-        {activeTab === 'comparison' && (
+        {activeTab === 'comparison' && sortedReports.length > 0 && (
           <div className="animate-fadeIn">
-            <ComparisonView reports={reports} selectedReportId={selectedReportId} />
+            <ComparisonView reports={sortedReports} selectedReportId={selectedReportId} />
           </div>
         )}
 
@@ -198,7 +239,7 @@ export default function App() {
               <div className="pb-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h2 className="text-lg font-bold text-stone-900 tracking-tight flex items-center gap-2">
-                    <Layers className="w-5 h-5 text-amber-500" />
+                    <Layers className="w-5 h-5 text-stone-700" />
                     <span>Emotional Themes Matrix Analysis — Week {currentReport.weekNumber}</span>
                   </h2>
                   <p className="text-xs text-stone-500 mt-0.5">
@@ -248,7 +289,7 @@ export default function App() {
         {activeTab === 'upload' && (
           <div className="animate-fadeIn">
             <UploadView
-              existingReports={reports}
+              existingReports={sortedReports}
               onSaveReport={handleSaveReport}
               onCancel={() => setActiveTab('dashboard')}
             />
@@ -272,7 +313,7 @@ export default function App() {
                 <button
                   id="print-briefing-btn"
                   onClick={handlePrint}
-                  className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
+                  className="px-4 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-semibold text-xs flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
                 >
                   <Printer className="w-4 h-4" />
                   <span>Print / Save as PDF</span>
@@ -285,8 +326,8 @@ export default function App() {
               {/* Document Header */}
               <div className="border-b-2 border-stone-900 pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
-                  <div className="text-xs font-bold tracking-widest text-amber-600 uppercase mb-1">
-                    CONFIDENTIAL EXECUTIVE REPORT
+                  <div className="text-xs font-bold tracking-widest text-stone-600 uppercase mb-1">
+                    EXECUTIVE PERFORMANCE REPORT
                   </div>
                   <h1 className="text-2xl font-bold text-stone-950 tracking-tight">
                     Memorialize Art — Social Performance Intelligence
@@ -342,12 +383,12 @@ export default function App() {
                     </span>
                   </div>
 
-                  <div className="p-3 border border-amber-300 rounded-lg bg-amber-50/60">
-                    <span className="text-[10px] text-amber-900 uppercase font-bold block">Median Baseline</span>
-                    <span className="text-lg font-bold text-amber-950 mt-1 block">
+                  <div className="p-3 border border-stone-300 rounded-lg bg-stone-100">
+                    <span className="text-[10px] text-stone-800 uppercase font-bold block">Median Baseline</span>
+                    <span className="text-lg font-bold text-stone-950 mt-1 block">
                       {currentReport.newEngine.medianViewsPerPost.toLocaleString()}
                     </span>
-                    <span className="text-[10px] text-amber-900 font-medium">Core Benchmark</span>
+                    <span className="text-[10px] text-stone-600 font-medium">Core Benchmark</span>
                   </div>
 
                   <div className="p-3 border border-stone-200 rounded-lg bg-stone-50">
@@ -409,7 +450,7 @@ export default function App() {
                 <div className="font-semibold text-stone-900">
                   {currentReport.strategicInsights.closingSignOff}
                 </div>
-                <div>Page 1 of 1 • Memorialize Art Weekly Intelligence</div>
+                <div>Memorialize Art Weekly Intelligence • MOAE Digitals</div>
               </div>
             </div>
           </div>

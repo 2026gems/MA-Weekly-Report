@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { WeeklyReport } from '../types';
-import { X, Save, ShieldCheck, Plus, Trash2 } from 'lucide-react';
+import { X, Save } from 'lucide-react';
 
 interface Props {
   report: WeeklyReport;
@@ -48,7 +48,7 @@ export const ReportEditorModal: React.FC<Props> = ({ report, onSave, onClose }) 
                 type="number"
                 value={formData.weekNumber}
                 onChange={(e) => setFormData({ ...formData, weekNumber: parseInt(e.target.value) || 1 })}
-                className="w-full p-2 border border-stone-300 rounded-lg focus:outline-none focus:border-amber-500"
+                className="w-full p-2 border border-stone-300 rounded-lg focus:outline-none focus:border-stone-500"
               />
             </div>
             <div className="col-span-2">
@@ -57,7 +57,7 @@ export const ReportEditorModal: React.FC<Props> = ({ report, onSave, onClose }) 
                 type="text"
                 value={formData.dateRange}
                 onChange={(e) => setFormData({ ...formData, dateRange: e.target.value })}
-                className="w-full p-2 border border-stone-300 rounded-lg focus:outline-none focus:border-amber-500"
+                className="w-full p-2 border border-stone-300 rounded-lg focus:outline-none focus:border-stone-500"
               />
             </div>
             <div>
@@ -66,7 +66,7 @@ export const ReportEditorModal: React.FC<Props> = ({ report, onSave, onClose }) 
                 type="text"
                 value={formData.preparedBy}
                 onChange={(e) => setFormData({ ...formData, preparedBy: e.target.value })}
-                className="w-full p-2 border border-stone-300 rounded-lg focus:outline-none focus:border-amber-500"
+                className="w-full p-2 border border-stone-300 rounded-lg focus:outline-none focus:border-stone-500"
               />
             </div>
           </div>
@@ -113,7 +113,7 @@ export const ReportEditorModal: React.FC<Props> = ({ report, onSave, onClose }) 
               </div>
 
               <div>
-                <label className="block text-[11px] text-amber-900 font-semibold mb-1">Median Views / Post</label>
+                <label className="block text-[11px] text-stone-800 font-semibold mb-1">Median Views / Post</label>
                 <input
                   type="number"
                   value={formData.newEngine.medianViewsPerPost}
@@ -123,7 +123,7 @@ export const ReportEditorModal: React.FC<Props> = ({ report, onSave, onClose }) 
                       newEngine: { ...formData.newEngine, medianViewsPerPost: parseFloat(e.target.value) || 0 },
                     })
                   }
-                  className="w-full p-2 border border-amber-300 rounded-lg bg-amber-50/50 font-bold text-amber-950"
+                  className="w-full p-2 border border-stone-400 rounded-lg bg-white font-bold text-stone-900"
                 />
               </div>
 
@@ -162,7 +162,7 @@ export const ReportEditorModal: React.FC<Props> = ({ report, onSave, onClose }) 
                   executiveSummary: { ...formData.executiveSummary, keyStrategicShift: e.target.value },
                 })
               }
-              className="w-full p-2.5 border border-stone-300 rounded-lg focus:outline-none focus:border-amber-500"
+              className="w-full p-2.5 border border-stone-300 rounded-lg focus:outline-none focus:border-stone-500"
             />
           </div>
 
@@ -253,7 +253,7 @@ export const ReportEditorModal: React.FC<Props> = ({ report, onSave, onClose }) 
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-4 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <Save className="w-4 h-4" />
               <span>Save Changes</span>

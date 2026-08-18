@@ -1,6 +1,6 @@
 import React from 'react';
 import { WeeklyReport } from '../types';
-import { RefreshCw, Users, ExternalLink, Activity, Sparkles, Flame } from 'lucide-react';
+import { RefreshCw, Users, ExternalLink, Activity, Sparkles, Layers } from 'lucide-react';
 import { formatNumber, formatPercent, getPlatformBadgeColor } from '../utils/formatters';
 
 interface Props {
@@ -15,10 +15,10 @@ export const EvergreenEngineSection: React.FC<Props> = ({ report }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-stone-100 gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+            <span className="w-2 h-2 rounded-full bg-stone-900"></span>
             <h2 className="text-base font-semibold text-stone-900 tracking-tight flex items-center gap-2">
               <span>2. Consolidated Account-Wide Performance</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 font-medium">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-800 border border-stone-200 font-medium">
                 The "Evergreen" Engine
               </span>
             </h2>
@@ -37,7 +37,7 @@ export const EvergreenEngineSection: React.FC<Props> = ({ report }) => {
 
       {/* Narrative block */}
       <div className="my-4 p-3.5 rounded-lg bg-stone-50 border border-stone-200/90 text-xs text-stone-700 leading-relaxed flex items-start gap-2.5">
-        <RefreshCw className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+        <RefreshCw className="w-4 h-4 text-stone-700 shrink-0 mt-0.5" />
         <p>{evergreenEngine.narrative}</p>
       </div>
 
@@ -78,10 +78,10 @@ export const EvergreenEngineSection: React.FC<Props> = ({ report }) => {
 
         <div className="p-3 rounded-lg bg-stone-50 border border-stone-200">
           <div className="text-[11px] font-medium text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-amber-600" />
+            <Layers className="w-3.5 h-3.5 text-stone-600" />
             <span>Evergreen Share</span>
           </div>
-          <div className="mt-1.5 text-lg font-bold text-emerald-700">
+          <div className="mt-1.5 text-lg font-bold text-stone-900">
             {evergreenEngine.evergreenSharePercent}%
           </div>
           <div className="text-[11px] text-stone-500">Long-term algorithmic lift</div>
@@ -160,7 +160,7 @@ export const EvergreenEngineSection: React.FC<Props> = ({ report }) => {
 
                   <td className="py-3 px-3">
                     <div className="font-bold text-stone-900">{formatNumber(p.evergreenViews)}</div>
-                    <div className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 inline-block font-medium mt-0.5 border border-emerald-200">
+                    <div className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-800 inline-block font-medium mt-0.5 border border-stone-200">
                       {p.evergreenSharePercent}% evergreen
                     </div>
                   </td>
